@@ -24,7 +24,6 @@ minerUpgrade.onclick = function(){
                 gems -= minerCost
 
                 minerCount++
-
         }
 }
 
