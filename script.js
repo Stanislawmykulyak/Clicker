@@ -10,7 +10,7 @@ function updateGems() {
 let gem_per_click = 1;
 let lucky_gem_percentage = 3
 accRock.addEventListener('click', function (e) {
-        if ((Math.random()*100) < lucky_gem_percentage) {
+        if ((Math.random() * 100) < lucky_gem_percentage) {
                 gems += gem_per_click * 7;
                 console.log("Lucky gem");
         } else {
@@ -22,36 +22,69 @@ accRock.addEventListener('click', function (e) {
 
 
 // Miner Upgrade
-const minerUpgrade = document.querySelector(".miner-upgrade")
-const minerLvl = document.querySelector(".miner-lvl")
-const minerPrice = document.querySelector(".miner-price")
+const upgrades = {
+        miner: {
+                baseCost: 10,
+                cost: 10,
+                efficiency: 0.1,
+                level: 0,
+                maxLevel: 100,
+                milestones: { 10: 2, 20: 2, 50: 2, 100: 10 }
+        },
+        wizard: {
+                baseCost: 150,
+                cost: 150,
+                efficiency: 0.5,
+                level: 0,
+                maxLevel: 100,
+                milestones: {}
+        },
+};
 
-function updateLvL() {
-        minerLvl.innerHTML = `Lvl: ${miner_level + 1}`
-}
-function updatePrice() {
-        minerPrice.innerHTML = `Price: ${minerCost.toFixed(0)}$`;
-}
-const minerBaseCost = 10;
-let minerCost = 10;
-let minerEfficiency = 0.1;
-let miner_level = 0;
+// Generyczna funkcja aktualizująca UI dowolnego ulepszenia
+function updateUpgradesUI() {
+        Object.keys(upgrades).forEach(key => {
+                const up = upgrades[key];
+                
+                // Dynamiczne łapanie elementów z HTML na podstawie klucza (np. .miner-lvl)
+                const lvlEl = document.querySelector(`.${key}-lvl`);
+                const priceEl = document.querySelector(`.${key}-price`);
 
-minerUpgrade.onclick = function () {
-        if (gems >= minerCost) {
-                gems -= minerCost
-
-                miner_level++
-                if (miner_level == 10 || miner_level == 20 || miner_level == 50) {
-                        minerEfficiency *= 2
+                if (lvlEl && priceEl) {
+                        if (up.level === up.maxLevel) {
+                                lvlEl.innerHTML = `MAX LVL`;
+                        } else {
+                                lvlEl.innerHTML = `Lvl: ${up.level + 1}`;
+                        }
+                        priceEl.innerHTML = `Price: ${up.cost.toFixed(0)}$`;
                 }
-                minerCost = Math.floor(minerBaseCost * Math.pow(1.15, miner_level));
+        });
+}
 
-                updateLvL();
-                updatePrice();
+// Generyczna logika zakupu ulepszeń
+function buyUpgrade(upgradeKey) {
+        const up = upgrades[upgradeKey];
+        if (gems >= up.cost && up.level < up.maxLevel) {
+                gems -= up.cost;
+                up.level++;
+
+                if (up.milestones[up.level]) {
+                        up.efficiency *= up.milestones[up.level];
+                }
+
+                up.cost = Math.floor(up.baseCost * Math.pow(1.15, up.level));
+        } else if (up.level >= up.maxLevel) {
+                console.log("You cant Upgrade , Max level reached");
         }
 }
 
+// Automatyczne podpięcie zdarzeń click dla wszystkich ulepszeń w obiekcie
+Object.keys(upgrades).forEach(key => {
+        const btn = document.querySelector(`.${key}-upgrade`);
+        if (btn) {
+                btn.onclick = () => buyUpgrade(key);
+        }
+});
 
 let lastTime = 0;
 let accumulatedTime = 0;
@@ -68,16 +101,34 @@ function gameLoop(timestamp) {
         // --- TUTAJ WCHODZI TWOJA LOGIKA ---
         // Na przykład: przesunięcie postaci o (prędkość * deltaTime)
         while (accumulatedTime >= 1000) {
-                gems += miner_level * minerEfficiency; // Dodajemy gemy z ulepszeń
-                accumulatedTime -= 1000; // Odejmujemy zużyte pół sekundy
+                
+                let globalMinerMultiplier = 1;
+                if (upgrades.wizard.level >= 10 && Math.random() < 0.05) {
+                        globalMinerMultiplier = 2;
+                        console.log("Szczęśliwy traf! Podwójny zysk minerów!");
+                }
+
+                // 2. Naliczanie przychodu dla wszystkich ulepszeń
+                Object.keys(upgrades).forEach(key => {
+                        const up = upgrades[key];
+                        let income = up.level * up.efficiency;
+
+                        // Jeśli pętla przetwarza minera, aplikujemy wyliczony wyżej bonus
+                        if (key === 'miner') {
+                                income *= globalMinerMultiplier;
+                        }
+
+                        gems += income;
+                });
+
+                accumulatedTime -= 1000;
         }
         // ----------------------------------
 
         // 3. Prośba o kolejną klatkę
         requestAnimationFrame(gameLoop);
-        updateGems()
-        updateLvL()
-        updatePrice()
+        updateGems();
+        updateUpgradesUI();
 }
 
 // Pierwsze odpalenie pętli

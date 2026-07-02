@@ -4,7 +4,7 @@ body{
 #entire-rock{
     user-select: none;
 }
-.miner-upgrades{
+.upgrades{
     background-color: #2b2b2b;
     border: 1px solid #000000;
     user-select: none;
@@ -14,8 +14,9 @@ body{
     display: flex;
     justify-content: center;
     color:white;
+    margin-bottom:20px;
 }
-.miner-price{
+.price{
     margin-right:20px;
     margin-left:10px;
 }
