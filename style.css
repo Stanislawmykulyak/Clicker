@@ -92,6 +92,8 @@ body {
 [class*="-upgrade"] {
     font-family: 'MedievalSharp', cursive;
     font-size: 1rem;
+    min-width: 150px;
+    margin-right:10px;
     font-weight: bold;
     color: #ffd700;
     background: linear-gradient(#4a382c, #2b1f18);
@@ -178,9 +180,75 @@ body {
         transform: scale(1); 
     }
     30% { 
-        transform: scale(1.1);
+        transform: scale(1.05);
     }
     100% { 
         transform: scale(1); 
+    }
+}
+[class*="-upgrades"].cant-afford {
+    opacity: 0.8;
+    filter: grayscale(70%);
+    border-color: #2b1f18; /* Ciemniejsza ramka */
+    transition: all 0.2s ease;
+}
+[class*="-upgrades"].cant-afford .buy-plus-btn {
+    background: #1a1310;
+    border-color: #3a2b22;
+    color: #5c4436;
+    cursor: not-allowed; /* Zmiana kursora na przekreślone kółko */
+    box-shadow: none;
+    transform: none !important;
+}
+[class*="-upgrades"].locked-upgrade {
+    filter: grayscale(100%) brightness(0.6) !important;
+    opacity: 0.4 !important;
+    pointer-events: none; /* Całkowita blokada jakichkolwiek kliknięć */
+}
+.floating-text {
+    position: fixed;
+    pointer-events: none; /* Kluczowe: myszka klika "przez" napisy */
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #a7f3d0; /* Jasny, kryształowy zielony */
+    text-shadow: 2px 2px 0px #000, 0 0 8px rgba(167, 243, 208, 0.6);
+    z-index: 9999; /* Zawsze nad panelem i kamieniem */
+    animation: floatUpAndFade 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    transform: translate(-50%, -50%);
+}
+
+/* Wersja dla szczęśliwego trafu (Kryt) */
+.floating-text.lucky-text {
+    font-size: 2.2rem;
+    color: #ffd700; /* Złoty */
+    text-shadow: 2px 2px 0px #000, 0 0 15px rgba(255, 215, 0, 0.8);
+    animation: floatUpAndFadeLucky 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Animacja standardowa */
+@keyframes floatUpAndFade {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -120px) scale(1.1);
+        opacity: 0;
+    }
+}
+
+/* Animacja dla Lucky Gem - delikatne tąpnięcie i wyższy lot */
+@keyframes floatUpAndFadeLucky {
+    0% {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 1;
+    }
+    30% {
+        transform: translate(-50%, -70px) scale(1.3);
+    }
+    100% {
+        transform: translate(-50%, -160px) scale(1);
+        opacity: 0;
     }
 }
