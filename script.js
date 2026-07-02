@@ -215,12 +215,16 @@ let upgrades = {
 function updateUpgradesUI() {
         // Słownik z oryginalnymi nazwami, które przywrócimy po odblokowaniu kafelka
         const upgradeNames = {
-                miner: "Gem Miner ",
-                archer: "Archidon ",
-                knight: "Knight ",
-                wizard: "Wizard Adept",
-                golem: "Earth Golem",
-                commander: "Lord Commander"
+                miner: "Miner",
+                quarry: "Quarry",
+                carapult: "Catapult",
+                iron_hammers: "Iron Hammer Order",
+                mine_inspector: "Mine Inspector",
+                runic_golem: "Runic Golem",
+                alchemic: "Alchemic",
+                earth_mage: "Earth Mage",
+                deep_shaft: "Deep Shaft",
+                gem_tower: "Gem Tower"
         };
 
         Object.keys(upgrades).forEach(key => {
@@ -317,85 +321,65 @@ Object.keys(upgrades).forEach(key => {
 
 let shopUpgrades = {
         sharper_pickaxe: {
-                name: "Sharper Pickaxe",
-                desc: "Forges your pickaxes into devastating tools. Each level increases manual click gains by x2.",
-                baseCost: 500,
-                cost: 500,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.0
+                name: "Mithril Pickaxe",
+                desc: "Forges your tool from legendary elven metal. Each level doubles manual click power (x2).",
+                baseCost: 150, cost: 150, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 2.5
         },
         miner_gear: {
-                name: "Reinforced Drills",
-                desc: "Equips your Miners with heavy-duty mining gear. Increases all Miner income by x2 per level.",
-                baseCost: 800,
-                cost: 800,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.5
+                name: "Reinforced Shovels",
+                desc: "Equips your Miners with heavy steel tools. Doubles Miner efficiency (x2).",
+                baseCost: 500, cost: 500, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 2.8
         },
-        archer_training: {
-                name: "Archer Training",
-                desc: "Intensive tactical maneuvers. Increases the base income of all Archers by x2 per level.",
-                baseCost: 4000,
-                cost: 4000,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.5
+        quarry_gear: {
+                name: "Black Powder Blasting",
+                desc: "Uses gunpowder to clear topsoil faster. Doubles Quarry yield (x2).",
+                baseCost: 3000, cost: 3000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.0
         },
-        knight_armory: {
-                name: "Valyrian Steel Forging",
-                desc: "Blesses your Knights with legendary weaponry. Increases all Knight income by x2 per level.",
-                baseCost: 45000,
-                cost: 45000,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.5
+        catapult_gear: {
+                name: "Heavy Steel Winches",
+                desc: "Allows catapult to fire massive bolts with incredible force. Catapult yield x2.",
+                baseCost: 15000, cost: 15000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.2
         },
-        wizard_grimoire: {
-                name: "Forbidden Grimoire",
-                desc: "Unlocks ancient leyline magic spells. Increases all Wizard income by x2 per level.",
-                baseCost: 550000,
-                cost: 550000,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.6
+        iron_hammers_gear: {
+                name: "Hardened Steel Anvils",
+                desc: "Improves the forging quality of heavy weapons. Iron Hammer Order yield x2.",
+                baseCost: 85000, cost: 85000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.4
         },
-        golem_core: {
-                name: "Anima Cores",
-                desc: "Overcharges Earth Golems with pure celestial energy. Increases Golem income by x2 per level.",
-                baseCost: 7500000,
-                cost: 7500000,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 3.8
+        inspector_gear: {
+                name: "Iron Discipline",
+                desc: "Enforces strict mine regulations and working hours. Mine Inspector yield x2.",
+                baseCost: 450000, cost: 450000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.5
         },
-        commander_tactic: {
-                name: "Imperial Sovereignty",
-                desc: "Absolute tactical command over the realm. Increases Lord Commander income by x2 per level.",
-                baseCost: 110000000,
-                cost: 110000000,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 2,
-                costGrowth: 4.0
+        golem_gear: {
+                name: "Earth-Core Infusion",
+                desc: "Channels core elemental energy directly into the constructs. Runic Golem yield x2.",
+                baseCost: 2500000, cost: 2500000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.6
+        },
+        alchemic_gear: {
+                name: "Acidic Dissolution",
+                desc: "Alchemical solutions that melt away dense granite layers. Alchemic yield x2.",
+                baseCost: 15000000, cost: 15000000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.7
+        },
+        earth_mage_gear: {
+                name: "Resonance Crystals",
+                desc: "Amplifies earth spells to soften stubborn bedrock. Earth Mage yield x2.",
+                baseCost: 90000000, cost: 90000000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.8
+        },
+        deep_shaft_gear: {
+                name: "Reinforced Pulley Cables",
+                desc: "Allows hauling much heavier mineral loads from the deeps. Deep Shaft yield x2.",
+                baseCost: 550000000, cost: 550000000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 3.9
+        },
+        gem_tower_gear: {
+                name: "Prismatic Lenses",
+                desc: "Focuses extracted magical light to draw gems out effortlessly. Gem Tower yield x2.",
+                baseCost: 4000000000, cost: 4000000000, level: 0, maxLevel: 10, multiplier: 2, costGrowth: 4.0
         },
         lucky_gauntlet: {
-                name: "Gauntlet of Destiny",
-                desc: "Infuses your clicks with fate. Each level increases Lucky Gem chance by +3% and raises its payout multiplier by +2x.",
-                baseCost: 2500,
-                cost: 2500,
-                level: 0,
-                maxLevel: 10,
-                multiplier: 0,
-                costGrowth: 3.8
-        },
+                name: "Prospector's Charm",
+                desc: "An old talisman filled with gold dust. Grants +3% Critical Shard chance and increases its value by +2x.",
+                baseCost: 1000, cost: 1000, level: 0, maxLevel: 10, multiplier: 0, costGrowth: 3.5
+        }
 };
 const storeTooltip = document.getElementById('store-tooltip');
 let currentActiveTooltipKey = null;
@@ -681,12 +665,12 @@ requestAnimationFrame(gameLoop);
 
 
 const tutorialSteps = [
-        "Sigh... Well, someone finally showed up. Listen closely, lad, because I won't repeat myself.",
-        "This massive rock before you hides Magic Gems. Try to CLICK it to chip off your first piece!",
-        "With the gems you earn, you can hire helpers in the panel on the right. See those hidden scrolls with question marks ???",
-        "Once your first Miner reaches level 5, you will unlock the next heroes: the Archer and the Knight.",
-        "Strange things happen in this mine too... Sometimes a strike triggers a lucky find, granting you a big bonus!",
-        "Alright, time to get to work. Click the rock and rebuild the glory of our kingdom!"
+        "May the Heavens watch over you, young lord. The King has finally sent a new overseer to these dark, rich lands.",
+        "This rock before you is packed with deep-earth energy. CLICK it ruthlessly to break off the first raw gems.",
+        "With the gathered wealth, you can expand operations and hire more personnel in the panel on the right.",
+        "Once you gather 5 Miners, you will unlock permissions to open a Quarry and build heavy Catapults.",
+        "The ground sometimes reacts to your strikes... Hit a weak spot to trigger a Critical Shard and shatter extra loot!",
+        "Collect the minerals, build your underground empire, and make sure no one slacksoff down there!"
 ];
 
 let currentStep = 0;
