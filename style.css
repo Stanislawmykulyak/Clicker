@@ -67,25 +67,31 @@ body {
 
 /* Kontener pojedynczego ulepszenia */
 [class*="-upgrades"] {
-    cursor: pointer;
-    background: linear-gradient(135deg, #2d221c 0%, #1f1713 100%);
-    border: 3px solid #5c4436;
-    outline: 1px solid #141110;
-    border-radius: 6px;
-    box-shadow: inset 0 0 15px #000, 0 8px 16px rgba(0,0,0,0.5);
-    width: 380px;
-    min-height: 70px;
-    padding: 10px 20px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-sizing: border-box;
-    user-select: none;
-    transition: border-color 0.2s;
+    align-items: center; /* Wyrównuje ikonę, button i ceny idealnie w pionie */
+    justify-content: flex-start; /* Zmieniamy na start, elementy idą od lewej */
+    background: rgba(30, 25, 23, 0.75); /* Ciemne, klimatyczne tło kafelka */
+    border: 2px solid #3d3028;
+    border-radius: 6px;
+    padding: 10px 15px;
+    width: 480px; /* Stała szerokość, żeby panel wyglądał równo i pro */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.05);
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 [class*="-upgrades"]:hover {
-    border-color: #8b654e;
+    border-color: #5c473c;
+    background: rgba(43, 35, 32, 0.85);
+}
+.upgrade-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: cover; /* Gwarantuje idealne docięcie grafiki do kwadratu */
+    border: 2px solid #5c4436;
+    border-radius: 4px;
+    background: #141110;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    margin-right: 15px; /* Odstęp między ikoną a przyciskiem kupna */
 }
 
 /* Przycisk stylizowany na starą tabliczkę / kutą stal */
@@ -115,20 +121,24 @@ body {
 }
 
 /* Cena i Poziomy ulepszeń */
-.miner-price, .archer-price, [class$="-price"] {
+[class$="-price"] {
+    margin-left: auto; /* Magiczny wypychacz do prawej */
     font-family: 'Cinzel', serif;
-    color: #a9c2a1; /* Blada, klimatyczna zieleń dla ekonomii */
-    font-weight: bold;
-    text-shadow: 1px 1px 2px #000;
     font-size: 1.05rem;
+    font-weight: bold;
+    color: #a7f3d0; /* Jasnozielony, "bogaty" kolor ceny */
+    text-shadow: 1px 1px 2px #000;
+    min-width: 90px; /* Gwarantuje, że cyfry nie będą skakać przy zmianie liczb */
+    text-align: right;
 }
 
-.miner-lvl, .archer-lvl, [class$="-lvl"] {
-    color: #dfb284; /* Ciepły brąz/pomarańcz */
+[class$="-lvl"] {
+    font-family: 'MedievalSharp', cursive;
     font-size: 0.95rem;
-    text-shadow: 1px 1px 1px #000;
-    border-left: 1px solid #5c4436;
-    padding-left: 15px;
+    color: #94a3b8; /* Stalowy kolor poziomu */
+    min-width: 70px;
+    text-align: right;
+    margin-left: 15px; /* Odstęp między ceną a poziomem */
 }
 #entire-rock{
     user-select: none;
