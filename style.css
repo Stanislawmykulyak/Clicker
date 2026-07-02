@@ -1,5 +1,118 @@
-body{
-    background-color: #393939;
+/* Import średniowiecznych czcionek z Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=MedievalSharp&display=swap');
+
+body {
+    background: radial-gradient(circle, #2c2523 0%, #141110 100%);
+    color: #f2e6d0; /* Kolor starego pergaminu */
+    font-family: 'MedievalSharp', cursive;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Licznik Gemów jako epicki tytuł */
+.gem-counter {
+    font-family: 'Cinzel', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #ffd700; /* Czyste złoto */
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 3px 3px 0px #000;
+    margin-bottom: 25px;
+    letter-spacing: 2px;
+    user-select: none;
+}
+
+/* Główny kamień - dodajemy magię i responsywność */
+.GemRock {
+    margin-bottom: 35px;
+    position: relative;
+    cursor: pointer;
+}
+
+.GemRock img {
+    max-width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.6));
+    transition: transform 0.1s ease, filter 0.2s ease;
+}
+
+/* Soczysty efekt kliknięcia w kamień */
+.GemRock img:active {
+    transform: scale(0.96);
+    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.5)) brightness(1.1);
+}
+
+/* Dynamiczny styl dla wszystkich kontenerów ulepszeń (Miner, Wizard itp.) */
+[class*="-upgrades"] {
+    background: linear-gradient(135deg, #2d221c 0%, #1f1713 100%);
+    border: 3px solid #5c4436;
+    outline: 1px solid #141110;
+    border-radius: 6px;
+    box-shadow: inset 0 0 15px #000, 0 8px 16px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    min-height: 70px;
+    margin-bottom: 15px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    user-select: none;
+    transition: border-color 0.2s;
+}
+
+[class*="-upgrades"]:hover {
+    border-color: #8b654e;
+}
+
+/* Przycisk stylizowany na starą tabliczkę / kutą stal */
+[class*="-upgrade"] {
+    font-family: 'MedievalSharp', cursive;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffd700;
+    background: linear-gradient(#4a382c, #2b1f18);
+    border: 2px solid #8b654e;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #1c1410, inset 0 1px 3px rgba(255,255,255,0.1);
+    transition: all 0.1s ease;
+}
+
+[class*="-upgrade"]:hover {
+    background: linear-gradient(#5a4537, #3b2b22);
+    color: #fff;
+    border-color: #b38469;
+}
+
+[class*="-upgrade"]:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #1c1410;
+}
+
+/* Cena i Poziomy ulepszeń */
+.miner-price, .manager-price, [class$="-price"] {
+    font-family: 'Cinzel', serif;
+    color: #a9c2a1; /* Blada, klimatyczna zieleń dla ekonomii */
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000;
+    font-size: 1.05rem;
+}
+
+.miner-lvl, .manager-lvl, [class$="-lvl"] {
+    color: #dfb284; /* Ciepły brąz/pomarańcz */
+    font-size: 0.95rem;
+    text-shadow: 1px 1px 1px #000;
+    border-left: 1px solid #5c4436;
+    padding-left: 15px;
 }
 #entire-rock{
     user-select: none;
