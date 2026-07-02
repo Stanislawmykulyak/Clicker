@@ -115,7 +115,7 @@ body {
 }
 
 /* Cena i Poziomy ulepszeń */
-.miner-price, .wizard-price, [class$="-price"] {
+.miner-price, .archer-price, [class$="-price"] {
     font-family: 'Cinzel', serif;
     color: #a9c2a1; /* Blada, klimatyczna zieleń dla ekonomii */
     font-weight: bold;
@@ -123,7 +123,7 @@ body {
     font-size: 1.05rem;
 }
 
-.miner-lvl, .wizard-lvl, [class$="-lvl"] {
+.miner-lvl, .archer-lvl, [class$="-lvl"] {
     color: #dfb284; /* Ciepły brąz/pomarańcz */
     font-size: 0.95rem;
     text-shadow: 1px 1px 1px #000;

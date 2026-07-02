@@ -112,7 +112,7 @@ const upgrades = {
                 maxLevel: 100,
                 milestones: { 10: 2, 20: 2, 50: 2, 100: 10 }
         },
-        wizard: {
+        archer: {
                 baseCost: 150,
                 cost: 150,
                 efficiency: 3,
@@ -120,6 +120,14 @@ const upgrades = {
                 maxLevel: 100,
                 milestones: { 10: 2, 20: 1.5, 50: 2, 100: 5 }
         },
+        knight: {
+                baseCost: 1100,
+                cost: 1100,
+                efficiency: 25,
+                level: 0,
+                maxLevel: 100,
+                milestones: { 10: 2.5, 20: 1.6, 50: 2, 100: 5 }
+        }
 };
 
 // Generyczna funkcja aktualizująca UI dowolnego ulepszenia
@@ -261,11 +269,25 @@ function gameLoop(timestamp) {
         // --- TUTAJ WCHODZI TWOJA LOGIKA ---
         // Na przykład: przesunięcie postaci o (prędkość * deltaTime)
         while (accumulatedTime >= 1000) {
-
+                if(upgrades.archer.level < 10){
+                      Miner_Income_multiplier_chance = 0  
+                }
+                if(upgrades.archer.level > 10){
+                      Miner_Income_multiplier_chance = 5  
+                }
+                if(upgrades.archer.level > 20){
+                      Miner_Income_multiplier_chance = 10  
+                }
+                if(upgrades.archer.level > 50){
+                      Miner_Income_multiplier_chance = 20  
+                }
+                if(upgrades.archer.level == 100){
+                      Miner_Income_multiplier_chance = 50
+                }
                 let globalMinerMultiplier = 1;
-                if (upgrades.wizard.level >= 10 && Math.random() < 0.05) {
+                if (upgrades.archer.level >= 10 && Math.random()*100 < Miner_Income_multiplier_chance) {
                         globalMinerMultiplier = 2;
-                        console.log("Szczęśliwy traf! Podwójny zysk minerów!");
+                        console.log("Lucky Mine , All miner income x2");
                 }
 
                 // 2. Naliczanie przychodu dla wszystkich ulepszeń
