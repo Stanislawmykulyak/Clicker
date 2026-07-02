@@ -1,54 +1,81 @@
 const accRock = document.getElementById('entire-rock')
 const gemCounter = document.querySelector('.gem-counter')
 
-const bgMusic = new Audio('media/BG-Music-DeusLover.mp3');
-bgMusic.loop = true;
+
+const playlist = [
+        'media/BG-Music-DeusLover.mp3',
+        'media/BG-Music-DeusLover-2.mp3',
+        'media/BG-Music-DeusLover-3.mp3',
+        'media/BG-Music-DeusLover-4.mp3',
+        'media/BG-Music-DeusLover-5.mp3'
+]
+let currentTrackIndex = 0;
+const bgMusic = new Audio(playlist[currentTrackIndex]);
 bgMusic.volume = 1;
 
 let isMuted = false;
 const audioBtn = document.getElementById('audio-toggle');
 
+function playNextTrack() {
+        currentTrackIndex++;
+        
+        // Jeśli dojdziemy do końca tablicy (indeks wyjdzie poza zakres), resetujemy do 0
+        if (currentTrackIndex >= playlist.length) {
+                currentTrackIndex = 0;
+        }
+        
+        // Ładujemy nowy plik do odtwarzacza
+        bgMusic.src = playlist[currentTrackIndex];
+        
+        // Jeśli gracz nie wyciszył muzyki, odpalamy kolejny utwór
+        if (!isMuted) {
+                bgMusic.play().catch(err => console.log("Autoplay block na kolejnym utworze:", err));
+        }
+}
+
+bgMusic.onended = playNextTrack;
+
 // Funkcja próbująca odpalić muzykę domyślnie
 function tryAutoplay() {
-        if (isMuted) return; // Jeśli gracz sam wyciszył, nie odpalaj ponowne
-        
+        if (isMuted) return;
         bgMusic.play().then(() => {
-                // Jeśli się udało odpalić, ściągamy blokadę kliknięcia z okna
                 window.removeEventListener('click', tryAutoplay);
         }).catch(() => {
-                console.log("Browser is blocking Autoplay");
+                console.log("browser is blocking autoplay, you need to click");
         });
 }
 
 // Próba odpalenia od razu + zabezpieczenie na pierwszy klik w dowolne miejsce na stronie
-startMusic();
 window.addEventListener('click', tryAutoplay);
 
-function startMusic() {
-        tryAutoplay();
-}
-
-// Logika Togglowania (Włącz / Wyłącz) po kliknięciu w kafelek
 audioBtn.onclick = function(e) {
-        e.stopPropagation(); // Blokuje aktywację innych eventów przy kliknięciu w kafelek
+        e.stopPropagation();
         
         if (bgMusic.paused) {
                 bgMusic.play();
-                audioBtn.innerHTML = "🔊 Music: ON";
-                audioBtn.style.borderColor = "#475569"; // Standardowy kolor stali
+                audioBtn.innerHTML = "🔊 Muzyka: ON";
+                audioBtn.style.borderColor = "#475569";
                 isMuted = false;
         } else {
                 bgMusic.pause();
-                audioBtn.innerHTML = "🔇 Music: OFF";
-                audioBtn.style.borderColor = "#991b1b"; // Czerwona obwódka, gdy wyciszone
+                audioBtn.innerHTML = "🔇 Muzyka: OFF";
+                audioBtn.style.borderColor = "#991b1b";
                 isMuted = true;
         }
 };
 
+function formatNumber(num) {
+        return new Intl.NumberFormat('en-US', {
+                notation: 'compact',
+                compactDisplay: 'short',
+                maximumFractionDigits: 1 // Maksymalnie jedna cyfra po przecinku (np. 1.5K zamiast 1.53K)
+        }).format(num);
+}
+
 let gems = 0;
 
 function updateGems() {
-        gemCounter.innerHTML = `Gems : ${gems.toFixed(0)}$`
+        gemCounter.innerHTML = `Gems : ${formatNumber(gems)}$`
 }
 
 let gem_per_click = 1;
@@ -61,7 +88,7 @@ const rockImg = document.querySelector('.GemRock img');
 accRock.addEventListener('click', function (e) {
         // Trik z wymuszeniem reflow – resetuje animację natychmiast przy ultra szybkim klikaniu
         rockImg.classList.remove('rock-pop');
-        void rockImg.offsetWidth; 
+        void rockImg.offsetWidth;
         rockImg.classList.add('rock-pop');
 
         // Reszta Twojego starego kodu kliknięcia bez zmian...
@@ -88,10 +115,10 @@ const upgrades = {
         wizard: {
                 baseCost: 150,
                 cost: 150,
-                efficiency:3,
+                efficiency: 3,
                 level: 0,
                 maxLevel: 100,
-                milestones: {10:2 ,20: 1.5 ,50: 2,100:5}
+                milestones: { 10: 2, 20: 1.5, 50: 2, 100: 5 }
         },
 };
 
@@ -99,7 +126,7 @@ const upgrades = {
 function updateUpgradesUI() {
         Object.keys(upgrades).forEach(key => {
                 const up = upgrades[key];
-                
+
                 // Dynamiczne łapanie elementów z HTML na podstawie klucza (np. .miner-lvl)
                 const lvlEl = document.querySelector(`.${key}-lvl`);
                 const priceEl = document.querySelector(`.${key}-price`);
@@ -110,7 +137,9 @@ function updateUpgradesUI() {
                         } else {
                                 lvlEl.innerHTML = `Lvl: ${up.level + 1}`;
                         }
-                        priceEl.innerHTML = `Price: ${up.cost.toFixed(0)}$`;
+
+                        // ZAMIEŃ TO: priceEl.innerHTML = `Price: ${up.cost.toFixed(0)}$`;
+                        priceEl.innerHTML = `Price: ${formatNumber(up.cost)}$`;
                 }
         });
 }
@@ -158,13 +187,13 @@ function saveGameToFile() {
         // Tworzenie "wirtualnego" pliku JSON w pamięci przeglądarki
         const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        
+
         // Automatyczne pobranie pliku przez ukryty link
         const a = document.createElement("a");
         a.href = url;
         a.download = "medieval_clicker_save.json";
         a.click();
-        
+
         // Czyszczenie pamięci
         URL.revokeObjectURL(url);
         console.log("Zwój zapisu został wygenerowany!");
@@ -176,7 +205,7 @@ function loadGameFromFile(event) {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
                 try {
                         const loadedData = JSON.parse(e.target.result);
 
@@ -197,7 +226,7 @@ function loadGameFromFile(event) {
                         }
 
                         console.log("Zwój odczytany pomyślnie! Stan gry zaktualizowany.");
-                        
+
                         // Wymuszenie natychmiastowego odświeżenia napisów na ekranie
                         updateGems();
                         updateUpgradesUI();
