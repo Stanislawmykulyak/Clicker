@@ -1,37 +1,55 @@
 /* Import średniowiecznych czcionek z Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=MedievalSharp&display=swap');
 
+
+
+
+
+
+
 body {
     background: radial-gradient(circle, #2c2523 0%, #141110 100%);
-    color: #f2e6d0; /* Kolor starego pergaminu */
+    color: #f2e6d0;
     font-family: 'MedievalSharp', cursive;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-/* Licznik Gemów jako epicki tytuł */
-.gem-counter {
-    font-family: 'Cinzel', serif;
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: #ffd700; /* Czyste złoto */
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 3px 3px 0px #000;
-    margin-bottom: 25px;
-    letter-spacing: 2px;
+    overflow: hidden; /* Blokuje zbędne paski przewijania */
     user-select: none;
 }
 
-/* Główny kamień - dodajemy magię i responsywność */
+.upgrades-panel {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Eleganckie odstępy między ulepszeniami */
+    z-index: 10; /* Nad kamieniem, żeby kliknięcia zawsze wpadały w przyciski */
+}
+
+/* Licznik w lewym górnym rogu */
+.gem-counter {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 3px 3px 0px #000;
+    letter-spacing: 2px;
+    user-select: none;
+    z-index: 10;
+}
+
+/* Kamień idealnie wycentrowany */
 .GemRock {
-    margin-bottom: 35px;
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     cursor: pointer;
+    z-index: 1; /* Pod spodem interfejsu */
 }
 
 .GemRock img {
@@ -47,18 +65,16 @@ body {
     filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.5)) brightness(1.1);
 }
 
-/* Dynamiczny styl dla wszystkich kontenerów ulepszeń (Miner, Wizard itp.) */
+/* Kontener pojedynczego ulepszenia */
 [class*="-upgrades"] {
+    cursor: pointer;
     background: linear-gradient(135deg, #2d221c 0%, #1f1713 100%);
     border: 3px solid #5c4436;
     outline: 1px solid #141110;
     border-radius: 6px;
     box-shadow: inset 0 0 15px #000, 0 8px 16px rgba(0,0,0,0.5);
-    width: 100%;
-    max-width: 420px;
-    height: auto;
+    width: 380px;
     min-height: 70px;
-    margin-bottom: 15px;
     padding: 10px 20px;
     display: flex;
     align-items: center;
@@ -99,7 +115,7 @@ body {
 }
 
 /* Cena i Poziomy ulepszeń */
-.miner-price, .manager-price, [class$="-price"] {
+.miner-price, .wizard-price, [class$="-price"] {
     font-family: 'Cinzel', serif;
     color: #a9c2a1; /* Blada, klimatyczna zieleń dla ekonomii */
     font-weight: bold;
@@ -107,7 +123,7 @@ body {
     font-size: 1.05rem;
 }
 
-.miner-lvl, .manager-lvl, [class$="-lvl"] {
+.miner-lvl, .wizard-lvl, [class$="-lvl"] {
     color: #dfb284; /* Ciepły brąz/pomarańcz */
     font-size: 0.95rem;
     text-shadow: 1px 1px 1px #000;
@@ -117,19 +133,52 @@ body {
 #entire-rock{
     user-select: none;
 }
-.upgrades{
-    background-color: #2b2b2b;
-    border: 1px solid #000000;
-    user-select: none;
-    width:250px;
-    height:60px;
-    align-items: center;
+.save-panel {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
     display: flex;
-    justify-content: center;
-    color:white;
-    margin-bottom:20px;
+    gap: 10px;
+    z-index: 10;
 }
-.price{
-    margin-right:20px;
-    margin-left:10px;
+
+/* Specjalny, chłodniejszy stalowy styl dla przycisków systemowych */
+#save-btn, #load-btn {
+    font-family: 'MedievalSharp', cursive;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    background: linear-gradient(#334155, #1e293b); /* Stalowy/kamienny odcień */
+    border: 2px solid #475569;
+    border-radius: 4px;
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #0f172a, inset 0 1px 2px rgba(255,255,255,0.05);
+    transition: all 0.1s ease;
+}
+
+#save-btn:hover, #load-btn:hover {
+    background: linear-gradient(#475569, #334155);
+    color: #fff;
+    border-color: #64748b;
+}
+
+#save-btn:active, #load-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #0f172a;
+}
+
+.rock-pop {
+    animation: ClickPop 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes ClickPop {
+    0% { 
+        transform: scale(1); 
+    }
+    30% { 
+        transform: scale(1.1);
+    }
+    100% { 
+        transform: scale(1); 
+    }
 }
