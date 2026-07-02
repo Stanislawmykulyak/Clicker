@@ -143,11 +143,11 @@ body {
 }
 
 /* Specjalny, chłodniejszy stalowy styl dla przycisków systemowych */
-#save-btn, #load-btn {
+#audio-toggle, #save-btn, #load-btn {
     font-family: 'MedievalSharp', cursive;
     font-size: 0.9rem;
     color: #cbd5e1;
-    background: linear-gradient(#334155, #1e293b); /* Stalowy/kamienny odcień */
+    background: linear-gradient(#334155, #1e293b);
     border: 2px solid #475569;
     border-radius: 4px;
     padding: 8px 14px;
@@ -156,13 +156,12 @@ body {
     transition: all 0.1s ease;
 }
 
-#save-btn:hover, #load-btn:hover {
+#audio-toggle:hover, #save-btn:hover, #load-btn:hover {
     background: linear-gradient(#475569, #334155);
     color: #fff;
-    border-color: #64748b;
 }
 
-#save-btn:active, #load-btn:active {
+#audio-toggle:active, #save-btn:active, #load-btn:active {
     transform: translateY(3px);
     box-shadow: 0 1px 0 #0f172a;
 }

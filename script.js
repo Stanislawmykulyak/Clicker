@@ -1,6 +1,50 @@
 const accRock = document.getElementById('entire-rock')
 const gemCounter = document.querySelector('.gem-counter')
 
+const bgMusic = new Audio('media/BG-Music-DeusLover.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 1;
+
+let isMuted = false;
+const audioBtn = document.getElementById('audio-toggle');
+
+// Funkcja próbująca odpalić muzykę domyślnie
+function tryAutoplay() {
+        if (isMuted) return; // Jeśli gracz sam wyciszył, nie odpalaj ponowne
+        
+        bgMusic.play().then(() => {
+                // Jeśli się udało odpalić, ściągamy blokadę kliknięcia z okna
+                window.removeEventListener('click', tryAutoplay);
+        }).catch(() => {
+                console.log("Browser is blocking Autoplay");
+        });
+}
+
+// Próba odpalenia od razu + zabezpieczenie na pierwszy klik w dowolne miejsce na stronie
+startMusic();
+window.addEventListener('click', tryAutoplay);
+
+function startMusic() {
+        tryAutoplay();
+}
+
+// Logika Togglowania (Włącz / Wyłącz) po kliknięciu w kafelek
+audioBtn.onclick = function(e) {
+        e.stopPropagation(); // Blokuje aktywację innych eventów przy kliknięciu w kafelek
+        
+        if (bgMusic.paused) {
+                bgMusic.play();
+                audioBtn.innerHTML = "🔊 Music: ON";
+                audioBtn.style.borderColor = "#475569"; // Standardowy kolor stali
+                isMuted = false;
+        } else {
+                bgMusic.pause();
+                audioBtn.innerHTML = "🔇 Music: OFF";
+                audioBtn.style.borderColor = "#991b1b"; // Czerwona obwódka, gdy wyciszone
+                isMuted = true;
+        }
+};
+
 let gems = 0;
 
 function updateGems() {
@@ -9,6 +53,8 @@ function updateGems() {
 
 let gem_per_click = 1;
 let lucky_gem_percentage = 3
+
+
 
 const rockImg = document.querySelector('.GemRock img');
 
