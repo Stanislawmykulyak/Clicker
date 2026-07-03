@@ -69,11 +69,24 @@ audioBtn.onclick = function (e) {
 };
 
 function formatNumber(num) {
-        return new Intl.NumberFormat('en-US', {
-                notation: 'compact',
-                compactDisplay: 'short',
-                maximumFractionDigits: 1
-        }).format(num);
+    if (num === 0) return "0";
+    
+    if (num < 1000) {
+        return num % 1 === 0 ? num.toString() : num.toFixed(1);
+    }
+
+    const suffixes = ["", "K", "M", "B", "T", "Q" ,];
+    
+    const i = Math.floor(Math.log10(num) / 3);
+
+    if (i >= suffixes.length) {
+        return num.toExponential(2);
+    }
+
+    const formatted = (num / Math.pow(10, i * 3)).toFixed(1);
+    
+    // TUTAJ BYŁ BŁĄD - brakowało tego return:
+    return formatted.replace(/\.0$/, '') + suffixes[i];
 }
 
 let gems = 0;
@@ -518,6 +531,199 @@ document.querySelectorAll('.store-item[data-upgrade]').forEach(el => {
         });
 });
 
+// --- ADVANCED MULTI-UNIT MISSION SYSTEM ---
+let missionsState = [
+    { id: 1, title: "Deep Shaft Escort", desc: "Secure the lower tunnels against feral deep-earth beasts.", baseDuration: 15, active: false, timeLeft: 0, setupUnits: {}, activeUnits: {}, gemMultiplier: 5, timerId: null },
+    { id: 2, title: "Crystal Vein Extraction", desc: "Conduct high-yield mining operations in a tectonically unstable zone.", baseDuration: 60, active: false, timeLeft: 0, setupUnits: {}, activeUnits: {}, gemMultiplier: 15, timerId: null },
+    { id: 3, title: "Flooded Shaft Reclamation", desc: "Pump out toxic water and recover lost heavy mining machinery.", baseDuration: 180, active: false, timeLeft: 0, setupUnits: {}, activeUnits: {}, gemMultiplier: 50, timerId: null }
+];
+
+// Calculate available units of a specific type
+function getFreeUnits(unitKey) {
+    let busyUnits = 0;
+    missionsState.forEach(m => {
+        if (m.active && m.activeUnits[unitKey]) {
+            busyUnits += m.activeUnits[unitKey];
+        }
+    });
+    return upgrades[unitKey].level - busyUnits;
+}
+
+// Dynamically calculate cumulative mission reward based on all sent unit types
+function calculateMissionReward(mission, unitsAllocation) {
+    let totalPower = 0;
+    
+    Object.keys(unitsAllocation).forEach(key => {
+        let count = unitsAllocation[key] || 0;
+        if (count <= 0) return;
+
+        let shopKey = null;
+        if (key === 'miner') shopKey = 'miner_gear';
+        else if (key === 'quarry') shopKey = 'quarry_gear';
+        else if (key === 'catapult') shopKey = 'catapult_gear';
+        else if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
+        else if (key === 'mine_inspector') shopKey = 'inspector_gear';
+        else if (key === 'runic_golem') shopKey = 'golem_gear';
+        else if (key === 'alchemic') shopKey = 'alchemic_gear';
+        else if (key === 'earth_mage') shopKey = 'earth_mage_gear';
+        else if (key === 'deep_shaft') shopKey = 'deep_shaft_gear';
+        else if (key === 'gem_tower') shopKey = 'gem_tower_gear';
+
+        let shopMultiplier = 1;
+        if (shopKey && shopUpgrades[shopKey]) {
+            shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+        }
+
+        totalPower += count * upgrades[key].efficiency * shopMultiplier;
+    });
+
+    return Math.floor(totalPower * mission.baseDuration * mission.gemMultiplier);
+}
+
+function changeMissionUnits(missionId, unitKey, amount) {
+    const mission = missionsState.find(m => m.id === missionId);
+    if (!mission || mission.active) return;
+
+    if (!mission.setupUnits[unitKey]) mission.setupUnits[unitKey] = 0;
+
+    let freeUnits = getFreeUnits(unitKey);
+    let hypotheticalSetup = mission.setupUnits[unitKey] + amount;
+
+    if (hypotheticalSetup >= 0 && amount <= freeUnits) {
+        mission.setupUnits[unitKey] = hypotheticalSetup;
+        renderMissions();
+    }
+}
+
+function startMission(missionId) {
+    const mission = missionsState.find(m => m.id === missionId);
+    if (!mission || mission.active) return;
+
+    // Sanity check: verify if at least one unit is assigned
+    let totalAssigned = Object.values(mission.setupUnits).reduce((a, b) => a + b, 0);
+    if (totalAssigned <= 0) return;
+
+    mission.active = true;
+    mission.activeUnits = { ...mission.setupUnits };
+    mission.timeLeft = mission.baseDuration;
+
+    mission.timerId = setInterval(() => {
+        mission.timeLeft--;
+
+        if (mission.timeLeft <= 0) {
+            clearInterval(mission.timerId);
+            
+            let finalReward = calculateMissionReward(mission, mission.activeUnits);
+            gems += finalReward;
+            
+            mission.active = false;
+            mission.activeUnits = {};
+            mission.setupUnits = {};
+            
+            console.log(`Mission completed! Earned: ${finalReward} 💎`);
+            updateGems();
+        }
+        renderMissions();
+    }, 1000);
+
+    renderMissions();
+}
+
+function renderMissions() {
+    const container = document.getElementById('missions-container');
+    if (!container) return;
+
+    const upgradeNames = {
+        miner: "Miner", quarry: "Quarry", catapult: "Catapult", iron_hammers: "Iron Hammer Order",
+        mine_inspector: "Mine Inspector", runic_golem: "Runic Golem", alchemic: "Alchemic",
+        earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower"
+    };
+
+    container.innerHTML = missionsState.map(m => {
+        let expectedReward = calculateMissionReward(m, m.active ? m.activeUnits : m.setupUnits);
+        
+        if (m.active) {
+            let deployedList = Object.keys(m.activeUnits)
+                .filter(k => m.activeUnits[k] > 0)
+                .map(k => `${upgradeNames[k]}: ${m.activeUnits[k]}`)
+                .join(', ');
+
+            return `
+                <div class="mission-card active-mission">
+                    <div class="mission-timer-ring">${m.timeLeft}s</div>
+                    <div class="mission-info">
+                        <h3>${m.title}</h3>
+                        <p class="mission-status-text"><strong>Status:</strong> Workforce Deployed</p>
+                        <p class="mission-status-text" style="font-size:0.85rem; color:#94a3b8;">(${deployedList})</p>
+                        <div class="mission-live-reward">Expected Loot: +${formatNumber(expectedReward)} 💎</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Cupertino UX Pattern: Show selectors ONLY for unit types that player actually unlocked/owns (lvl > 0)
+            let unlockedUnits = Object.keys(upgrades).filter(k => upgrades[k].level > 0);
+            
+            let unitSelectorsHTML = unlockedUnits.map(k => {
+                let currentSetup = m.setupUnits[k] || 0;
+                let free = getFreeUnits(k);
+                return `
+                    <div class="mission-control-box" style="margin-bottom: 8px;">
+                        <span class="control-label" style="font-size:0.85rem;">${upgradeNames[k]} (Avail: ${free}):</span>
+                        <div class="counter-actions">
+                            <button onclick="changeMissionUnits(${m.id}, '${k}', -1)" class="btn-ctrl">-</button>
+                            <span class="unit-counter-value">${currentSetup}</span>
+                            <button onclick="changeMissionUnits(${m.id}, '${k}', 1)" class="btn-ctrl" ${free <= 0 ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            let hasUnitsSelected = Object.values(m.setupUnits).reduce((a, b) => a + b, 0) > 0;
+
+            return `
+                <div class="mission-card">
+                    <h3>${m.title}</h3>
+                    <p class="mission-desc">${m.desc}</p>
+                    <div class="mission-unit-selectors" style="margin-bottom: 15px;">
+                        ${unitSelectorsHTML || '<p style="font-size:0.85rem;color:#f87171;text-align:center;">Hire structures in the Mine first!</p>'}
+                    </div>
+                    <div class="mission-meta">
+                        <span>⏱️ Duration: ${m.baseDuration}s</span>
+                        <span>💎 Reward: +${formatNumber(expectedReward)}</span>
+                    </div>
+                    <button onclick="startMission(${m.id})" class="btn-launch" ${!hasUnitsSelected ? 'disabled' : ''}>
+                        Launch Expedition
+                    </button>
+                </div>
+            `;
+        }
+    }).join('');
+}
+const sidebarButtons = document.querySelectorAll('.sidebar-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+sidebarButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Zapobiega triggerowaniu autoplay muzyki z window click
+        
+        // Czyszczenie stanu aktywnego z buttonów
+        sidebarButtons.forEach(b => b.classList.remove('active'));
+        
+        // Ukrycie wszystkich widoków zakładek
+        tabContents.forEach(tab => tab.classList.add('hidden'));
+        
+        // Aktywacja wybranego elementu
+        btn.classList.add('active');
+        const targetTabId = btn.getAttribute('data-tab');
+        const targetTab = document.getElementById(targetTabId);
+        
+        if (targetTab) {
+            targetTab.classList.remove('hidden');
+        }
+    });
+});
+
+
 function saveGameToFile() {
         const dataToSave = {
                 gems: gems,
@@ -627,6 +833,11 @@ function loadGameFromFile(event) {
 
 document.getElementById('save-btn').onclick = saveGameToFile;
 
+
+
+
+
+
 const fileInput = document.getElementById('file-input');
 document.getElementById('load-btn').onclick = () => fileInput.click();
 fileInput.onchange = loadGameFromFile;
@@ -661,6 +872,7 @@ function gameLoop(timestamp) {
 
                         if (key === 'miner') {
                                 income *= globalMinerMultiplier;
+                          
                         }
 
                         // NAPRAWIONE: Powiązanie ulepszeń sklepu z nowymi strukturami

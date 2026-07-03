@@ -9,200 +9,223 @@
 </head>
 
 <body>
-    <div id="tutorial-overlay" class="tutorial-overlay">
-        <div class="dialogue-box">
-            <div class="npc-container">
-                <div class="npc-avatar">🧙‍♂️</div>
-                <div class="npc-name">Gromir (Old Miner)</div>
+    <div class="main-sidebar">
+        <button class="sidebar-btn active" data-tab="mine-tab"><span>Mine</span></button>
+        <button class="sidebar-btn" data-tab="tavern-tab"><span>Tavern</span></button>
+        <button class="sidebar-btn" data-tab="altar-tab"><span>Altar</span></button>
+    </div>
+    <div id="mine-tab" class="tab-content">
+        <div id="tutorial-overlay" class="tutorial-overlay">
+            <div class="dialogue-box">
+                <div class="npc-container">
+                    <div class="npc-avatar">🧙‍♂️</div>
+                    <div class="npc-name">Gromir (Old Miner)</div>
+                </div>
+                <div class="speech-bubble">
+                    <p id="tutorial-text">Sigh... Well, someone finally showed up. Listen closely, young man, because I
+                        won't repeat myself</p>
+                    <span class="click-prompt">Click to countinue...</span>
+                </div>
             </div>
-            <div class="speech-bubble">
-                <p id="tutorial-text">Sigh... Well, someone finally showed up. Listen closely, young man, because I
-                    won't repeat myself</p>
-                <span class="click-prompt">Click to countinue...</span>
+        </div>
+        <div class="gem-counter">Gems : 0</div>
+        <div class="GemRock">
+            <img src="media/Gem-Rock.png" width="400" height="300" usemap="#rock-map" alt="Gem Rock" />
+
+            <map name="rock-map">
+                <area shape="poly"
+                    coords="120,30, 220,30, 290,45, 325,100, 365,150, 370,210, 350,250, 270,265, 215,285, 120,255, 40,210, 30,150, 70,80"
+                    id="entire-rock">
+            </map>
+        </div>
+        <div class="upgrades-panel">
+            <!-- 1. Miner -->
+            <div class="miner-upgrades">
+                <img src="media/miner-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Miner">
+                <button class="miner-upgrade">Miner</button>
+                <div class="miner-price"></div>
+                <div class="miner-lvl"></div>
+            </div>
+
+            <!-- 2. Quarry -->
+            <div class="quarry-upgrades">
+                <img src="media/quarry-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Quarry">
+                <button class="quarry-upgrade">Quarry</button>
+                <div class="quarry-price"></div>
+                <div class="quarry-lvl"></div>
+            </div>
+
+            <!-- 3. Catapult -->
+            <div class="catapult-upgrades">
+                <img src="media/catapult-upgrade.jpg" width="50" height="50" class="upgrade-icon" alt="Catapult">
+                <button class="catapult-upgrade">Catapult</button>
+                <div class="catapult-price"></div>
+                <div class="catapult-lvl"></div>
+            </div>
+
+            <!-- 4. Iron Hammer Order -->
+            <div class="iron_hammers-upgrades">
+                <img src="media/iron-hammers.png" width="50" height="50" class="upgrade-icon" alt="Iron Hammer Order">
+                <button class="iron_hammers-upgrade">Iron Hammer Order</button>
+                <div class="iron_hammers-price"></div>
+                <div class="iron_hammers-lvl"></div>
+            </div>
+
+            <!-- 5. Mine Inspector -->
+            <div class="mine_inspector-upgrades">
+                <img src="media/mine-inspector.png" width="50" height="50" class="upgrade-icon" alt="Mine Inspector">
+                <button class="mine_inspector-upgrade">Mine Inspector</button>
+                <div class="mine_inspector-price"></div>
+                <div class="mine_inspector-lvl"></div>
+            </div>
+
+            <!-- 6. Runic Golem -->
+            <div class="runic_golem-upgrades">
+                <img src="media/runic-golem.png" width="50" height="50" class="upgrade-icon" alt="Runic Golem">
+                <button class="runic_golem-upgrade">Runic Golem</button>
+                <div class="runic_golem-price"></div>
+                <div class="runic_golem-lvl"></div>
+            </div>
+
+            <!-- 7. Alchemic -->
+            <div class="alchemic-upgrades">
+                <img src="media/alchemic-upgrade.jpg" width="50" height="50" class="upgrade-icon" alt="Alchemic">
+                <button class="alchemic-upgrade">Alchemic</button>
+                <div class="alchemic-price"></div>
+                <div class="alchemic-lvl"></div>
+            </div>
+
+            <!-- 8. Earth Mage -->
+            <div class="earth_mage-upgrades">
+                <img src="media/earth-mage.png" width="50" height="50" class="upgrade-icon" alt="Earth Mage">
+                <button class="earth_mage-upgrade">Earth Mage</button>
+                <div class="earth_mage-price"></div>
+                <div class="earth_mage-lvl"></div>
+            </div>
+
+            <!-- 9. Deep Shaft -->
+            <div class="deep_shaft-upgrades">
+                <img src="media/deep-shaft.png" width="50" height="50" class="upgrade-icon" alt="Deep Shaft">
+                <button class="deep_shaft-upgrade">Deep Shaft</button>
+                <div class="deep_shaft-price"></div>
+                <div class="deep_shaft-lvl"></div>
+            </div>
+
+            <!-- 10. Gem Tower -->
+            <div class="gem_tower-upgrades">
+                <img src="media/gem-tower.png" width="50" height="50" class="upgrade-icon" alt="Gem Tower">
+                <button class="gem_tower-upgrade">Gem Tower</button>
+                <div class="gem_tower-price"></div>
+                <div class="gem_tower-lvl"></div>
+            </div>
+        </div>
+        <div class="save-panel">
+            <button id="audio-toggle">🔊 Music: ON</button>
+            <button id="save-btn">Save Game</button>
+            <button id="load-btn">Load Game</button>
+
+            <input type="file" id="file-input" accept=".json" style="display: none;">
+        </div>
+        <div class="store-panel">
+            <div class="store-title">Store</div>
+            <div class="store-subheader">UPGRADES</div>
+            <div class="store-grid">
+                <!-- Manual Click Tool Multiplier -->
+                <div class="store-item" data-upgrade="sharper_pickaxe">
+                    <span class="store-icon">⛏️</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 2. Błyskawica (Reinforced Shovels) -->
+                <div class="store-item" data-upgrade="miner_gear">
+                    <span class="store-icon">⚡</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 3. Zębatka (Black Powder Blasting) -->
+                <div class="store-item" data-upgrade="quarry_gear">
+                    <span class="store-icon">⚙️</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 4. Łuk (Heavy Steel Winches) -->
+                <div class="store-item" data-upgrade="catapult_gear">
+                    <span class="store-icon">🏹</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 5. Miecze (Hardened Steel Anvils) -->
+                <div class="store-item" data-upgrade="iron_hammers_gear">
+                    <span class="store-icon">⚔️</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 6. Książka (Iron Discipline) -->
+                <div class="store-item" data-upgrade="inspector_gear">
+                    <span class="store-icon">📘</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+
+                <!-- RZĄD 2 (Ikony od lewej do prawej) -->
+
+                <!-- 7. Diament (Earth-Core Infusion) -> TUTAJ BYŁ BŁĄD! -->
+                <div class="store-item" data-upgrade="golem_gear">
+                    <span class="store-icon">💎</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 8. Korona (Acidic Dissolution) -->
+                <div class="store-item" data-upgrade="alchemic_gear">
+                    <span class="store-icon">👑</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 9. Kłódka 1 (Resonance Crystals) -->
+                <div class="store-item" data-upgrade="earth_mage_gear">
+                    <span class="store-icon">🪄</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 10. Kłódka 2 (Reinforced Pulley Cables) -->
+                <div class="store-item" data-upgrade="deep_shaft_gear">
+                    <span class="store-icon">🧨</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 11. Kłódka 3 (Prismatic Lenses) -->
+                <div class="store-item" data-upgrade="gem_tower_gear">
+                    <span class="store-icon">🏛️</span>
+                    <span class="store-lvl">0</span>
+                </div>
+
+                <!-- 12. Ostatnie ulepszenie (Prospector's Charm) -->
+                <div class="store-item" data-upgrade="lucky_gauntlet">
+                    <span class="store-icon">🍀</span>
+                    <span class="store-lvl">0</span>
+                </div>
+            </div>
+
+            <!-- Inteligentny, pływający popup z opisem przedmiotu -->
+            <div id="store-tooltip" class="store-tooltip"></div>
+        </div>
+    </div>
+    <div id="tavern-tab" class="tab-content hidden">
+        <div class="tavern-wrapper">
+            <h2 class="tavern-title">📜 Mining Mission Board</h2>
+            <div id="missions-container" class="missions-grid">
+                <!-- JS will automatically inject advanced mission cards here -->
             </div>
         </div>
     </div>
-    <div class="gem-counter">Gems : 0</div>
-    <div class="GemRock">
-        <img src="media/Gem-Rock.png" width="400" height="300" usemap="#rock-map" alt="Gem Rock" />
 
-        <map name="rock-map">
-            <area shape="poly"
-                coords="120,30, 220,30, 290,45, 325,100, 365,150, 370,210, 350,250, 270,265, 215,285, 120,255, 40,210, 30,150, 70,80"
-                id="entire-rock">
-        </map>
-    </div>
-    <div class="upgrades-panel">
-        <!-- 1. Miner -->
-        <div class="miner-upgrades">
-            <img src="media/miner-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Miner">
-            <button class="miner-upgrade">Miner</button>
-            <div class="miner-price"></div>
-            <div class="miner-lvl"></div>
-        </div>
-
-        <!-- 2. Quarry -->
-        <div class="quarry-upgrades">
-            <img src="media/quarry-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Quarry">
-            <button class="quarry-upgrade">Quarry</button>
-            <div class="quarry-price"></div>
-            <div class="quarry-lvl"></div>
-        </div>
-
-        <!-- 3. Catapult -->
-        <div class="catapult-upgrades">
-            <img src="media/catapult-upgrade.jpg" width="50" height="50" class="upgrade-icon" alt="Catapult">
-            <button class="catapult-upgrade">Catapult</button>
-            <div class="catapult-price"></div>
-            <div class="catapult-lvl"></div>
-        </div>
-
-        <!-- 4. Iron Hammer Order -->
-        <div class="iron_hammers-upgrades">
-            <img src="media/iron-hammers.png" width="50" height="50" class="upgrade-icon" alt="Iron Hammer Order">
-            <button class="iron_hammers-upgrade">Iron Hammer Order</button>
-            <div class="iron_hammers-price"></div>
-            <div class="iron_hammers-lvl"></div>
-        </div>
-
-        <!-- 5. Mine Inspector -->
-        <div class="mine_inspector-upgrades">
-            <img src="media/mine-inspector.png" width="50" height="50" class="upgrade-icon" alt="Mine Inspector">
-            <button class="mine_inspector-upgrade">Mine Inspector</button>
-            <div class="mine_inspector-price"></div>
-            <div class="mine_inspector-lvl"></div>
-        </div>
-
-        <!-- 6. Runic Golem -->
-        <div class="runic_golem-upgrades">
-            <img src="media/runic-golem.png" width="50" height="50" class="upgrade-icon" alt="Runic Golem">
-            <button class="runic_golem-upgrade">Runic Golem</button>
-            <div class="runic_golem-price"></div>
-            <div class="runic_golem-lvl"></div>
-        </div>
-
-        <!-- 7. Alchemic -->
-        <div class="alchemic-upgrades">
-            <img src="media/alchemic-upgrade.jpg" width="50" height="50" class="upgrade-icon" alt="Alchemic">
-            <button class="alchemic-upgrade">Alchemic</button>
-            <div class="alchemic-price"></div>
-            <div class="alchemic-lvl"></div>
-        </div>
-
-        <!-- 8. Earth Mage -->
-        <div class="earth_mage-upgrades">
-            <img src="media/earth-mage.png" width="50" height="50" class="upgrade-icon" alt="Earth Mage">
-            <button class="earth_mage-upgrade">Earth Mage</button>
-            <div class="earth_mage-price"></div>
-            <div class="earth_mage-lvl"></div>
-        </div>
-
-        <!-- 9. Deep Shaft -->
-        <div class="deep_shaft-upgrades">
-            <img src="media/deep-shaft.png" width="50" height="50" class="upgrade-icon" alt="Deep Shaft">
-            <button class="deep_shaft-upgrade">Deep Shaft</button>
-            <div class="deep_shaft-price"></div>
-            <div class="deep_shaft-lvl"></div>
-        </div>
-
-        <!-- 10. Gem Tower -->
-        <div class="gem_tower-upgrades">
-            <img src="media/gem-tower.png" width="50" height="50" class="upgrade-icon" alt="Gem Tower">
-            <button class="gem_tower-upgrade">Gem Tower</button>
-            <div class="gem_tower-price"></div>
-            <div class="gem_tower-lvl"></div>
+    <div id="altar-tab" class="tab-content hidden">
+        <div class="tab-placeholder">
+            <h2>✨ Ancient Altar</h2>
+            <p>Unlock sub-skills for your structures using Magical Crystals here.</p>
         </div>
     </div>
-    <div class="save-panel">
-        <button id="audio-toggle">🔊 Music: ON</button>
-        <button id="save-btn">Save Game</button>
-        <button id="load-btn">Load Game</button>
-
-        <input type="file" id="file-input" accept=".json" style="display: none;">
-    </div>
-    <div class="store-panel">
-        <div class="store-title">Store</div>
-        <div class="store-subheader">UPGRADES</div>
-        <div class="store-grid">
-            <!-- Manual Click Tool Multiplier -->
-            <div class="store-item" data-upgrade="sharper_pickaxe">
-                <span class="store-icon">⛏️</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 2. Błyskawica (Reinforced Shovels) -->
-            <div class="store-item" data-upgrade="miner_gear">
-                <span class="store-icon">⚡</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 3. Zębatka (Black Powder Blasting) -->
-            <div class="store-item" data-upgrade="quarry_gear">
-                <span class="store-icon">⚙️</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 4. Łuk (Heavy Steel Winches) -->
-            <div class="store-item" data-upgrade="catapult_gear">
-                <span class="store-icon">🏹</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 5. Miecze (Hardened Steel Anvils) -->
-            <div class="store-item" data-upgrade="iron_hammers_gear">
-                <span class="store-icon">⚔️</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 6. Książka (Iron Discipline) -->
-            <div class="store-item" data-upgrade="inspector_gear">
-                <span class="store-icon">📘</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-
-            <!-- RZĄD 2 (Ikony od lewej do prawej) -->
-
-            <!-- 7. Diament (Earth-Core Infusion) -> TUTAJ BYŁ BŁĄD! -->
-            <div class="store-item" data-upgrade="golem_gear">
-                <span class="store-icon">💎</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 8. Korona (Acidic Dissolution) -->
-            <div class="store-item" data-upgrade="alchemic_gear">
-                <span class="store-icon">👑</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 9. Kłódka 1 (Resonance Crystals) -->
-            <div class="store-item" data-upgrade="earth_mage_gear">
-                <span class="store-icon">🪄</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 10. Kłódka 2 (Reinforced Pulley Cables) -->
-            <div class="store-item" data-upgrade="deep_shaft_gear">
-                <span class="store-icon">🧨</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 11. Kłódka 3 (Prismatic Lenses) -->
-            <div class="store-item" data-upgrade="gem_tower_gear">
-                <span class="store-icon">🏛️</span>
-                <span class="store-lvl">0</span>
-            </div>
-
-            <!-- 12. Ostatnie ulepszenie (Prospector's Charm) -->
-            <div class="store-item" data-upgrade="lucky_gauntlet">
-                <span class="store-icon">🍀</span>
-                <span class="store-lvl">0</span>
-            </div>
-        </div>
-
-        <!-- Inteligentny, pływający popup z opisem przedmiotu -->
-        <div id="store-tooltip" class="store-tooltip"></div>
-        <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>
