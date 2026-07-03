@@ -42,7 +42,7 @@ function tryAutoplay() {
         bgMusic.play().then(() => {
                 window.removeEventListener('click', tryAutoplay);
         }).catch(() => {
-                
+
         });
 }
 
@@ -65,6 +65,8 @@ if (audioBtn) {
         };
 }
 
+let globalMissionCooldownEnd = 0;
+let rerollCooldownEnd = 0;
 
 
 function formatNumber(num) {
@@ -87,6 +89,23 @@ let isTavernUnlocked = false;
 let isAltarUnlocked = false;
 
 let crystals_bought = 0;
+
+let factionMultipliers = {
+        miner: 1.0,
+        quarry: 1.0,
+        catapult: 1.0,
+        iron_hammers: 1.0,
+        mine_inspector: 1.0,
+        runic_golem: 1.0,
+        alchemic: 1.0,
+        earth_mage: 1.0,
+        deep_shaft: 1.0,
+        gem_tower: 1.0
+};
+let activeCrisis = null;
+let crisisTimerId = null;
+let crisisCheckIntervalId = null;
+let hasSeenCrisisTutorial = localStorage.getItem('hasSeenCrisisTutorial') === 'true';
 
 function updateGems() {
         if (gemCounter) gemCounter.innerHTML = `Gems : ${formatNumber(gems)}💎`;
@@ -258,7 +277,7 @@ function buyCrystalPerk(unit, index) {
                 </div>
         `;
                 }
-                
+
         } else if (perk.unlocked) {
                 alert("Ten talent jest już odblokowany!");
         } else {
@@ -288,7 +307,7 @@ if (accRock) {
                 if ((Math.random() * 100) < currentLuckyChance) {
                         gainedGems = gem_per_click * currentLuckyMultiplier;
                         isLucky = true;
-                        
+
                 } else {
                         gainedGems = gem_per_click;
                 }
@@ -422,27 +441,6 @@ function updateUpgradesUI() {
                 const btnEl = upgradeContainer.querySelector(`.${key}-upgrade`);
 
                 // Dynamiczne tworzenie opisu pod przyciskiem (Układ kolumnowy wewnątrz wiersza)
-                let descEl = upgradeContainer.querySelector('.dynamic-upgrade-desc');
-                if (!descEl) {
-                        descEl = document.createElement('div');
-                        descEl.className = 'dynamic-upgrade-desc';
-                        descEl.style.fontSize = '0.78rem';
-                        descEl.style.color = '#94a3b8';
-                        descEl.style.marginTop = '4px';
-                        descEl.style.textAlign = 'left';
-
-                        const infoWrapper = document.createElement('div');
-                        infoWrapper.className = 'upgrade-info-wrapper';
-                        infoWrapper.style.display = 'flex';
-                        infoWrapper.style.flexDirection = 'column';
-                        infoWrapper.style.flexGrow = '1';
-                        infoWrapper.style.alignItems = 'flex-start';
-
-                        btnEl.parentNode.insertBefore(infoWrapper, btnEl);
-                        infoWrapper.appendChild(btnEl);
-                        infoWrapper.appendChild(descEl);
-                }
-
                 // Kalkulacja realnej produkcji pojedynczej jednostki (uwzględnia Sklep i Perki)
                 let shopKey = key === 'miner' ? 'miner_gear' : key === 'quarry' ? 'quarry_gear' : key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
                 if (key === 'mine_inspector') shopKey = 'inspector_gear';
@@ -477,13 +475,13 @@ function updateUpgradesUI() {
                         if (btnEl) { btnEl.innerHTML = "???"; btnEl.disabled = true; }
                         if (lvlEl) lvlEl.innerHTML = "🔒";
                         if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(calculatedCost)} 💎`;
-                        descEl.innerHTML = "Mądrość klanu wymaga wyższego poziomu poprzednich struktur.";
+
                 } else {
                         upgradeContainer.classList.remove('locked-upgrade');
                         if (btnEl) btnEl.innerHTML = upgradeNames[key];
                         if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(calculatedCost)} 💎`;
                         if (lvlEl) lvlEl.innerHTML = up.level === up.maxLevel ? `MAX LVL` : `Lvl: ${up.level}`;
-                        descEl.innerHTML = `${upgradeDescriptions[key]} (+${formatNumber(currentSingleEfficiency)}/s)`;
+
                 }
 
                 if (isUnlocked) {
@@ -689,7 +687,6 @@ const upgradeData = {
 document.addEventListener("DOMContentLoaded", () => {
         const tooltip = document.getElementById("upgrade-tooltip");
         const titleEl = document.getElementById("tooltip-title");
-        const descEl = document.getElementById("tooltip-description");
         const costEl = document.getElementById("tooltip-cost-value");
 
         // Nasłuchujemy na kontenerze głównym (upgrades-panel)
@@ -711,7 +708,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                                 // Ustawiamy treść
                                 titleEl.textContent = data.name;
-                                descEl.textContent = data.desc;
                                 costEl.textContent = priceText;
 
                                 // Pokazujemy
@@ -773,140 +769,215 @@ const allMissionsPool = [
         // --- ZWYKŁE (Kolor Niebieski) ---
         {
                 title: "Zbieranie Odłamków",
-                desc: "Przečeš jaskinie w poszukiwaniu drobnych kryształów porzuconych przez kilofy.",
-                baseDuration: 15,
+                desc: "Przechesh jaskinie w poszukiwaniu drobnych kryształów porzuconych przez kilofy.",
+                baseDuration: 45,
                 gemMultiplier: 3,
                 rarity: "Normal",
-                requirements: { miner: 2 }
+                requirements: { miner: 5 },
+                maxUnits: 10
         },
         {
                 title: "Naprawa Wagoników",
-                desc: "Wagoniki transportowe torują drogę. Potrzebna natychmiastowa konserwacja osi.",
-                baseDuration: 25,
+                desc: "Wagoniki transportowe torują drogę. Potrzebna konserwacja osi.",
+                baseDuration: 60,
                 gemMultiplier: 5,
                 rarity: "Normal",
-                requirements: { miner: 5 }
+                requirements: { miner: 12 },
+                maxUnits: 20
         },
         {
                 title: "Oczyszczenie Kopalni",
                 desc: "Wypędź potwory z dolnych poziomów, aby górnicy mogli bezpiecznie pracować.",
-                baseDuration: 35,
+                baseDuration: 90,
                 gemMultiplier: 8,
                 rarity: "Normal",
-                requirements: { iron_hammers: 3, mine_inspector: 1 }
-        },
-        {
-                title: "Wzmocnienie Stropu",
-                desc: "Jeden z korytarzy zaczyna niebezpiecznie trzeszczeć. Wyślij wsparcie inżynieryjne.",
-                baseDuration: 45,
-                gemMultiplier: 10,
-                rarity: "Normal",
-                requirements: { miner: 4, quarry: 1 }
+                requirements: { iron_hammers: 4, mine_inspector: 1 },
+                maxUnits: 15
         },
 
         // --- RZADKIE (Kolor Zielony) ---
         {
                 title: "Eskorta Karawany",
                 desc: "Zabezpiecz transport rzadkich kryształów do królewskiego zamku.",
-                baseDuration: 60,
-                gemMultiplier: 15,
+                baseDuration: 180,
+                gemMultiplier: 12,
                 rarity: "Rare",
-                requirements: { miner: 10, catapult: 2 }
+                requirements: { miner: 20, catapult: 3 },
+                maxUnits: 30
         },
         {
                 title: "Odzyskiwanie Zalanego Szybu",
                 desc: "Wypompuj toksyczną wodę i uratuj uwięziony ciężki sprzęt.",
-                baseDuration: 90,
-                gemMultiplier: 30,
+                baseDuration: 240,
+                gemMultiplier: 20,
                 rarity: "Rare",
-                requirements: { mine_inspector: 3, quarry: 2 }
+                requirements: { mine_inspector: 5, quarry: 4 },
+                maxUnits: 25
         },
         {
                 title: "Obrona przed Goblinami",
                 desc: "Zielonoskórzy próbują podkopać się pod nasz główny magazyn dynamitu.",
-                baseDuration: 100,
-                gemMultiplier: 40,
+                baseDuration: 300,
+                gemMultiplier: 35,
                 rarity: "Rare",
-                requirements: { catapult: 3, iron_hammers: 2 }
-        },
-        {
-                title: "Inspekcja Tuneli",
-                desc: "Główny Inspektor musi przeprowadzić rygorystyczne testy sejsmiczne w starych szybach.",
-                baseDuration: 120,
-                gemMultiplier: 50,
-                rarity: "Rare",
-                requirements: { mine_inspector: 2, miner: 15 }
+                requirements: { catapult: 6, iron_hammers: 5 },
+                maxUnits: 35
         },
 
         // --- EPICKIE (Kolor Fioletowy) ---
         {
                 title: "Magiczne Przesilenie",
-                desc: "Ustaktywuj i zabezpiecz niestabilny energetycznie starożytny rdzeń.",
-                baseDuration: 180,
-                gemMultiplier: 90,
+                desc: "Uaktywnuj i zabezpiecz niestabilny energetycznie starożytny rdzeń.",
+                baseDuration: 600,
+                gemMultiplier: 70,
                 rarity: "Epic",
-                requirements: { earth_mage: 2, runic_golem: 1 }
-        },
-        {
-                title: "Głębokie Wiercenia Szybu",
-                desc: "Przewierć się przez najtwardszą skałę w poszukiwaniu mitycznych czarnych diamentów.",
-                baseDuration: 240,
-                gemMultiplier: 150,
-                rarity: "Epic",
-                requirements: { deep_shaft: 1, mine_inspector: 5, iron_hammers: 8 }
+                requirements: { earth_mage: 4, runic_golem: 2 },
+                maxUnits: 15
         },
         {
                 title: "Wydobycie Żyły Mithrilu",
                 desc: "Odkryto kieszeń powietrzną pełną czystego Mithrilu. Skała jest niezwykle twarda.",
-                baseDuration: 280,
-                gemMultiplier: 220,
+                baseDuration: 900,
+                gemMultiplier: 140,
                 rarity: "Epic",
-                requirements: { quarry: 8, iron_hammers: 5, runic_golem: 2 }
+                requirements: { quarry: 15, iron_hammers: 12, runic_golem: 4 },
+                maxUnits: 40
         },
 
         // --- MITYCZNE (Kolor Pomarańczowy) ---
         {
                 title: "Rytuał Proroka Słońca",
                 desc: "Magowie Ziemi muszą okiełznać podziemną magię, aby nasycić wieże nową energią.",
-                baseDuration: 350,
-                gemMultiplier: 500,
+                baseDuration: 1800,
+                gemMultiplier: 400,
                 rarity: "Mythic",
-                requirements: { earth_mage: 5, alchemic: 3, gem_tower: 1 }
+                requirements: { earth_mage: 10, alchemic: 5, gem_tower: 2 },
+                maxUnits: 25
         },
         {
                 title: "Pieczęć Głębin",
                 desc: "Pradawne zło próbuje przedostać się przez najniższy szyb. Zabarykaduj przejście.",
-                baseDuration: 420,
-                gemMultiplier: 750,
+                baseDuration: 2400,
+                gemMultiplier: 650,
                 rarity: "Mythic",
-                requirements: { deep_shaft: 3, runic_golem: 4, mine_inspector: 10 }
+                requirements: { deep_shaft: 5, runic_golem: 12, mine_inspector: 20 },
+                maxUnits: 50
         },
 
         // --- LEGENDARNE (Kolor Złoty) ---
         {
-                title: "Alchemiczna Transmutacja Żyły",
-                desc: "Nasyć całą żyłę skały czystą magią, ryzykując potężną eksplozję.",
-                baseDuration: 500,
-                gemMultiplier: 1100,
-                rarity: "Legendary",
-                requirements: { alchemic: 2, earth_mage: 3, gem_tower: 1 }
-        },
-        {
                 title: "Polowanie na Czerwonego Smoka",
-                desc: "Legenda głosi, że w najgłębszych jaskiniach zalęgła się bestia. Wyślij elitę.",
-                baseDuration: 600,
-                gemMultiplier: 1500,
+                desc: "W najgłębszych jaskiniach zalęgła się bestia. Wyślij elitę militarno-górniczą.",
+                baseDuration: 3600,
+                gemMultiplier: 1200,
                 rarity: "Legendary",
-                requirements: { runic_golem: 5, iron_hammers: 15, gem_tower: 3 }
+                requirements: { runic_golem: 15, iron_hammers: 35, gem_tower: 5 },
+                maxUnits: 60
         },
         {
                 title: "Przebudzenie Tytana Ziemi",
-                desc: "Obywatelski obowiązek wzywa. Przebudź i okiełznaj potęgę kolosa, który śpi pod jądrem kopalni.",
-                baseDuration: 750,
-                gemMultiplier: 2500,
+                desc: "Przebudź i okiełznaj potęgę kolosa, który śpi pod jądrem kopalni. Ekstremalny limit załogi!",
+                baseDuration: 7200,
+                gemMultiplier: 2200,
                 rarity: "Legendary",
-                requirements: { gem_tower: 5, deep_shaft: 5, runic_golem: 10 }
+                requirements: { gem_tower: 12, deep_shaft: 10, runic_golem: 25 },
+                maxUnits: 75
+        },
+        {
+                title: "Kopanie Nowego Szybu",
+                desc: "Rozszerzamy sieć korytarzy w poszukiwaniu świeżych żył mineralnych.",
+                baseDuration: 30,
+                gemMultiplier: 2,
+                rarity: "Normal",
+                requirements: { miner: 3 },
+                maxUnits: 8
+        },
+        {
+                title: "Sortowanie Środowiskowe",
+                desc: "Odsiej pospolity gruz od wartościowych kamieni szlachetnych.",
+                baseDuration: 50,
+                gemMultiplier: 4,
+                rarity: "Normal",
+                requirements: { miner: 8 },
+                maxUnits: 12
+        },
+        // --- NOWE MISJE (RZADKIE) ---
+        {
+                title: "Badanie Starych Wyrobisk",
+                desc: "Zbadaj zapomniane, zalane sektory kopalni. Kto wie, co tam zostawiono.",
+                baseDuration: 120,
+                gemMultiplier: 10,
+                rarity: "Rare",
+                requirements: { miner: 15, quarry: 2 },
+                maxUnits: 20
+        },
+        {
+                title: "Deratyzacja Jaskiń",
+                desc: "Plaga zmutowanych szczurów blokuje tory transportowe. Wyślij wsparcie.",
+                baseDuration: 150,
+                gemMultiplier: 15,
+                rarity: "Rare",
+                requirements: { iron_hammers: 3, miner: 10 },
+                maxUnits: 18
+        },
+        // --- NOWE MISJE (EPICKIE) ---
+        {
+                title: "Podziemny Szlak Handlowy",
+                desc: "Nawiąż bezpieczny kontakt z kupcami z głębin i zabezpiecz transakcje.",
+                baseDuration: 400,
+                gemMultiplier: 45,
+                rarity: "Epic",
+                requirements: { mine_inspector: 4, catapult: 2 },
+                maxUnits: 22
+        },
+        {
+                title: "Kryształowe Anomalia",
+                desc: "Wykryto nagłe, potężne wyładowania energii krystalicznej. Trzeba je okiełznać.",
+                baseDuration: 500,
+                gemMultiplier: 55,
+                rarity: "Epic",
+                requirements: { earth_mage: 2, runic_golem: 1 },
+                maxUnits: 12
+        },
+        // --- NOWE MISJE (MITYCZNE) ---
+        {
+                title: "Ostrzał Magmowych Pomiotów",
+                desc: "Istoty z lawy próbują stopić maszyny oblężnicze. Zmiażdż je z dystansu.",
+                baseDuration: 1200,
+                gemMultiplier: 250,
+                rarity: "Mythic",
+                requirements: { catapult: 12, iron_hammers: 15 },
+                maxUnits: 30
+        },
+        {
+                title: "Transmutacja Wielkich Złóż",
+                desc: "Uruchom masowy proces alchemiczny mający na celu zamianę bazaltu w czysty diament.",
+                baseDuration: 1500,
+                gemMultiplier: 320,
+                rarity: "Mythic",
+                requirements: { alchemic: 4, mine_inspector: 10 },
+                maxUnits: 20
+        },
+        // --- NOWE MISJE (LEGENDARNE) ---
+        {
+                title: "Szturm na Twierdzę Cieni",
+                desc: "Odkryto podziemną fortecę wrogiej frakcji. Pełna mobilizacja bojowa!",
+                baseDuration: 4500,
+                gemMultiplier: 1500,
+                rarity: "Legendary",
+                requirements: { runic_golem: 20, iron_hammers: 40, gem_tower: 3 },
+                maxUnits: 70
+        },
+        {
+                title: "Aktywacja Rdzenia Świata",
+                desc: "Wykorzystaj maksymalną moc wież, by połączyć się z najgłębszą magią sejsmiczną.",
+                baseDuration: 6000,
+                gemMultiplier: 2000,
+                rarity: "Legendary",
+                requirements: { gem_tower: 10, earth_mage: 20, deep_shaft: 8 },
+                maxUnits: 80
         }
+
 ];
 
 // Aktywne misje na tablicy (3 sloty)
@@ -924,13 +995,13 @@ function generateRandomMission(slotId) {
                 gemMultiplier: rawMission.gemMultiplier,
                 rarity: rawMission.rarity,
                 requirements: { ...rawMission.requirements },
+                maxUnits: rawMission.maxUnits, // <-- TA LINIA DODANA
                 active: false,
                 timeLeft: 0,
                 setupUnits: {},
                 activeUnits: {}
         };
 }
-
 function initMissionsBoard() {
         missionsState = [
                 generateRandomMission(1),
@@ -991,8 +1062,22 @@ function changeMissionUnits(missionId, unitKey, amount) {
         if (!playerOwnsRequirements(mission)) return;
 
         if (!mission.setupUnits[unitKey]) mission.setupUnits[unitKey] = 0;
-        if (amount > 0 && amount <= getFreeUnits(unitKey)) { mission.setupUnits[unitKey] += amount; }
-        else if (amount < 0 && mission.setupUnits[unitKey] >= Math.abs(amount)) { mission.setupUnits[unitKey] += amount; }
+
+        // Liczymy ile ludzi łącznie już siedzi w tej misji
+        let currentTotal = Object.values(mission.setupUnits).reduce((a, b) => a + b, 0);
+
+        if (amount > 0) {
+                // Blokada jeśli przekracza limit misji
+                if (currentTotal + amount > mission.maxUnits) {
+                        alert(`Ta misja pomieści maksymalnie ${mission.maxUnits} jednostek!`);
+                        return;
+                }
+                if (amount <= getFreeUnits(unitKey)) {
+                        mission.setupUnits[unitKey] += amount;
+                }
+        } else if (amount < 0 && mission.setupUnits[unitKey] >= Math.abs(amount)) {
+                mission.setupUnits[unitKey] += amount;
+        }
         renderMissions();
 }
 
@@ -1003,14 +1088,31 @@ function setMissionUnits(missionId, unitKey, value) {
 
         let parsedValue = Math.max(0, parseInt(value) || 0);
         let currentSetup = mission.setupUnits[unitKey] || 0;
-        mission.setupUnits[unitKey] = 0;
-        let maxAvailable = currentSetup + getFreeUnits(unitKey);
+        
+        // Obliczamy ile jednostek zajmują INNE sloty w tej misji
+        let otherUnitsTotal = Object.keys(mission.setupUnits)
+                .filter(k => k !== unitKey)
+                .reduce((sum, k) => sum + (mission.setupUnits[k] || 0), 0);
+
+        let maxAllowedByMissionCap = mission.maxUnits - otherUnitsTotal;
+        let maxAvailable = Math.min(currentSetup + getFreeUnits(unitKey), maxAllowedByMissionCap);
+
         mission.setupUnits[unitKey] = Math.min(parsedValue, maxAvailable);
         renderMissions();
 }
 
+
 function rerollMissionsBoard() {
         const rerollCost = 50000;
+        
+        // Kontrola cooldownu rerolla
+        let now = Date.now();
+        if (now < rerollCooldownEnd) {
+                let secLeft = Math.ceil((rerollCooldownEnd - now) / 1000);
+                alert(`Odświeżanie tablicy jest zablokowane! Odczekaj jeszcze ${secLeft}s.`);
+                return;
+        }
+
         if (gems >= rerollCost) {
                 const anyActive = missionsState.some(m => m.active);
                 if (anyActive) {
@@ -1018,6 +1120,7 @@ function rerollMissionsBoard() {
                         return;
                 }
                 gems -= rerollCost;
+                rerollCooldownEnd = Date.now() + 120000; // Ustawienie blokady na 2 minuty
                 initMissionsBoard();
                 updateGems();
                 renderMissions();
@@ -1025,20 +1128,397 @@ function rerollMissionsBoard() {
                 alert("Nie masz wystarczająco dużo Gems (Wymagane: 50K 💎)!");
         }
 }
+const crisisPool = [
+        {       
+                title: "Wstrząsy w Kuźniach",
+                desc: "Ciężkie młoty Zakonu generują wibracje, przez które w kopalniach sypią się stropy. Górnicy żądają ograniczenia pracy kowali.",
+                duration: 45,
+                requiredFactions: ["miner", "iron_hammers"],
+                icons: ["⛏️", "🛡️"],
+                choices: [
+                        { text: "Zabezpiecz stropy (Górnicy +15%, Młoty -10%)", action: () => { factionMultipliers.miner += 0.15; factionMultipliers.iron_hammers -= 0.10; } },
+                        { text: "Broń musi powstawać! (Młoty +15%, Górnicy -15%)", action: () => { factionMultipliers.iron_hammers += 0.15; factionMultipliers.miner -= 0.15; } }
+                ]
+        },
+        {
+                title: "Spór o Amunicję",
+                desc: "Obsługa katapult masowo podbiera najlepsze bloki skalne z Kamieniołomu, paraliżując transport surowca. Robotnicy blokują wozy.",
+                duration: 40,
+                requiredFactions: ["quarry", "catapult"],
+                icons: ["🪨", "🏹"],
+                choices: [
+                        { text: "Oddaj skały robotnikom (Kamieniołom +20%, Katapulty -10%)", action: () => { factionMultipliers.quarry += 0.20; factionMultipliers.catapult -= 0.10; } },
+                        { text: "Zasilić machiny wojenne (Katapulty +20%, Kamieniołom -15%)", action: () => { factionMultipliers.catapult += 0.20; factionMultipliers.quarry -= 0.15; } }
+                ]
+        },
+        {
+                title: "Niespodziewany Audyt",
+                desc: "Główny Inspektor Kopalni zarzuca Zakonowi Żelaznych Młotów łamanie królewskich norm wydajności i grozi nałożeniem kar.",
+                duration: 35,
+                requiredFactions: ["iron_hammers", "mine_inspector"],
+                icons: ["🛡️", "📋"],
+                choices: [
+                        { text: "Poprzyj surowe procedury (Inspektor +15%, Młoty -10%)", action: () => { factionMultipliers.mine_inspector += 0.15; factionMultipliers.iron_hammers -= 0.10; } },
+                        { text: "Przymknij oko na biurokrację (Młoty +20%, Inspektor -15%)", action: () => { factionMultipliers.iron_hammers += 0.20; factionMultipliers.mine_inspector -= 0.15; } }
+                ]
+        },
+        {
+                title: "Konflikt o Głębokie Szyby",
+                desc: "Inspektorzy kopalni chcą zamknąć najbardziej dochodowe sektory z powodu wycieków gazu. Górnicy wolą ryzykować życie dla zysku.",
+                duration: 40,
+                requiredFactions: ["miner", "mine_inspector"],
+                icons: ["⛏️", "📋"],
+                choices: [
+                        { text: "Zgoda na ryzykowne wydobycie (Górnicy +15%, Inspektor -15%)", action: () => { factionMultipliers.miner += 0.15; factionMultipliers.mine_inspector -= 0.15; } },
+                        { text: "Wprowadź natychmiastowy przestój (Inspektor +20%, Górnicy -10%)", action: () => { factionMultipliers.mine_inspector += 0.20; factionMultipliers.miner -= 0.10; } }
+                ]
+        },
+        {       
+        title: "Bunt Maszyn",
+                desc: "Runiczne Golemy zablokowały wejście do kopalni, twierdząc, że Górnicy przeciążają ich obwody energetyczne.",
+                duration: 40,
+                requiredFactions: ["runic_golem", "miner"],
+                icons: ["🤖", "⛏️"],
+                choices: [
+                        { text: "Kalibruj golemy (Golemy +15%, Górnicy -10%)", action: () => { factionMultipliers.runic_golem += 0.15; factionMultipliers.miner -= 0.10; } },
+                        { text: "Zmuś robotników do bicia kilofem (Górnicy +20%, Golemy -15%)", action: () => { factionMultipliers.miner += 0.20; factionMultipliers.runic_golem -= 0.15; } }
+                ]
+        },
+        {
+                title: "Trzęsienie Ziemi",
+                desc: "Magowie Ziemi przesadzili z rytuałem przyspieszania wydobycia, przez co w Kamieniołomie osunęła się główna ściana skalna.",
+                duration: 45,
+                requiredFactions: ["earth_mage", "quarry"],
+                icons: ["🔮", "🪨"],
+                choices: [
+                        { text: "Zleć magom stabilizację (Magowie +15%, Kamieniołom -15%)", action: () => { factionMultipliers.earth_mage += 0.15; factionMultipliers.quarry -= 0.15; } },
+                        { text: "Odmul kamieniołom ręcznie (Kamieniołom +20%, Magowie -10%)", action: () => { factionMultipliers.quarry += 0.20; factionMultipliers.earth_mage -= 0.10; } }
+                ]
+        },
+        {
+                title: "Zasilanie Wieży",
+                desc: "Wieża Klejnotów pobiera kryształy przeznaczone na rdzenie celownicze dla Katapult. Artyleria zostaje bez amunicji.",
+                duration: 35,
+                requiredFactions: ["gem_tower", "catapult"],
+                icons: ["💎", "🏹"],
+                choices: [
+                        { text: "Skup moc w wieży (Wieża +20%, Katapulty -15%)", action: () => { factionMultipliers.gem_tower += 0.20; factionMultipliers.catapult -= 0.15; } },
+                        { text: "Przekaż kryształy wojsku (Katapulty +15%, Wieża -10%)", action: () => { factionMultipliers.catapult += 0.15; factionMultipliers.gem_tower -= 0.10; } }
+                ]
+        },
+        {
+                title: "Kwasowy Wyciek",
+                desc: "Alchemicy wylewają toksyczne odpady blisko kuźni Żelaznych Młotów, przez co kowale duszą się przy kowadłach.",
+                duration: 40,
+                requiredFactions: ["alchemic", "iron_hammers"],
+                icons: ["🧪", "🛡️"],
+                choices: [
+                        { text: "Zneutralizuj chemia kuźnię (Alchemicy +15%, Młoty -10%)", action: () => { factionMultipliers.alchemic += 0.15; factionMultipliers.iron_hammers -= 0.10; } },
+                        { text: "Przenieś laboratoria dalej (Młoty +20%, Alchemicy -15%)", action: () => { factionMultipliers.iron_hammers += 0.20; factionMultipliers.alchemic -= 0.15; } }
+                ]
+        },
+        {
+                title: "Zalanie Głębokiego Szybu",
+                desc: "Inspektor Kopalni chce zamknąć Głęboki Szyb z powodu wysokiego poziomu wód gruntowych. Zarząd szybu żąda pompowania.",
+                duration: 38,
+                requiredFactions: ["mine_inspector", "deep_shaft"],
+                icons: ["📋", "🕳️"],
+                choices: [
+                        { text: "Wprowadź rygor bezpieczeństwa (Inspektor +15%, Szyb -15%)", action: () => { factionMultipliers.mine_inspector += 0.15; factionMultipliers.deep_shaft -= 0.15; } },
+                        { text: "Pompuj wodę i pracuj dalej (Szyb +20%, Inspektor -10%)", action: () => { factionMultipliers.deep_shaft += 0.20; factionMultipliers.mine_inspector -= 0.10; } }
+                ]
+        },
+        {
+                title: "Erozja Runów",
+                desc: "Magowie Ziemi nieświadomie wysysają energię magiczną z Runicznych Golemów, drastycznie spowalniając ich pracę.",
+                duration: 42,
+                requiredFactions: ["earth_mage", "runic_golem"],
+                icons: ["🔮", "🤖"],
+                choices: [
+                        { text: "Pozwól magom czerpać moc (Magowie +20%, Golemy -15%)", action: () => { factionMultipliers.earth_mage += 0.20; factionMultipliers.runic_golem -= 0.15; } },
+                        { text: "Odizoluj golemy barierą (Golemy +15%, Magowie -10%)", action: () => { factionMultipliers.runic_golem += 0.15; factionMultipliers.earth_mage -= 0.10; } }
+                ]
+        },
+        {
+                title: "Niestabilne Eliksiry",
+                desc: "Alchemicy chcą użyć Wieży Klejnotów jako gigantycznej soczewki do destylacji eliksirów. Wieża ryzykuje przegrzaniem.",
+                duration: 35,
+                requiredFactions: ["alchemic", "gem_tower"],
+                icons: ["🧪", "💎"],
+                choices: [
+                        { text: "Zaryzykuj destylację (Alchemicy +25%, Wieża -20%)", action: () => { factionMultipliers.alchemic += 0.25; factionMultipliers.gem_tower -= 0.20; } },
+                        { text: "Chroń soczewki wieży (Wieża +15%, Alchemicy -10%)", action: () => { factionMultipliers.gem_tower += 0.15; factionMultipliers.alchemist -= 0.10; } }
+                ]
+        },
+        {
+                title: "Wentylacja Głębin",
+                desc: "Głęboki Szyb generuje potężne ciągi powietrza, które wysysają tlen z wyższych poziomów kopalni Górników.",
+                duration: 40,
+                requiredFactions: ["deep_shaft", "miner"],
+                icons: ["🕳️", "⛏️"],
+                choices: [
+                        { text: "Zostaw pełną moc na dole (Szyb +15%, Górnicy -10%)", action: () => { factionMultipliers.deep_shaft += 0.15; factionMultipliers.miner -= 0.10; } },
+                        { text: "Zbalansuj śluzy powietrzne (Górnicy +15%, Szyb -15%)", action: () => { factionMultipliers.miner += 0.15; factionMultipliers.deep_shaft -= 0.15; } }
+                ]
+        },
+        {
+                title: "Wielkie Głazy",
+                desc: "Kamieniołom dostarcza zbyt wielkie bloki skalne. Katapulty nie mogą ich załadować bez wcześniejszego łupania.",
+                duration: 45,
+                requiredFactions: ["quarry", "catapult"],
+                icons: ["🪨", "🏹"],
+                choices: [
+                        { text: "Krusz kamienie na miejscu (Katapulty +20%, Kamieniołom -10%)", action: () => { factionMultipliers.catapult += 0.20; factionMultipliers.quarry -= 0.10; } },
+                        { text: "Ładuj mniejsze salwy (Kamieniołom +15%, Katapulty -15%)", action: () => { factionMultipliers.quarry += 0.15; factionMultipliers.catapult -= 0.15; } }
+                ]
+        },
+        {
+                title: "Certyfikat Kucia",
+                desc: "Inspektor Kopalni blokuje dostawy stali od Żelaznych Młotów, dopóki kowale nie przejdą testów BHP.",
+                duration: 35,
+                requiredFactions: ["mine_inspector", "iron_hammers"],
+                icons: ["📋", "🛡️"],
+                choices: [
+                        { text: "Wdroż procedury urzędnika (Inspektor +20%, Młoty -15%)", action: () => { factionMultipliers.mine_inspector += 0.20; factionMultipliers.iron_hammers -= 0.15; } },
+                        { text: "Przekup inspektora (Młoty +15%, Inspektor -15%)", action: () => { factionMultipliers.iron_hammers += 0.15; factionMultipliers.mine_inspector -= 0.15; } }
+                ]
+        },
+        {
+                title: "Stalowe Pancerze Golemów",
+                desc: "Żelazne Młoty żądają stopów z Runicznych Golemów do produkcji broni. Golemy odmawiają oddania swoich płyt pancerza.",
+                duration: 40,
+                requiredFactions: ["iron_hammers", "runic_golem"],
+                icons: ["🛡️", "🤖"],
+                choices: [
+                        { text: "Przetop części golemów (Młoty +20%, Golemy -20%)", action: () => { factionMultipliers.iron_hammers += 0.20; factionMultipliers.runic_golem -= 0.20; } },
+                        { text: "Wzmocnij konstrukcję golemów (Golemy +15%, Młoty -10%)", action: () => { factionMultipliers.runic_golem += 0.15; factionMultipliers.iron_hammers -= 0.10; } }
+                ]
+        },
+        {
+                title: "Skażenie Magią",
+                desc: "Magowie Ziemi wywołują rezonans, który zakłóca pompy i windy w Głębokim Szybie. Wszystko staje w miejscu.",
+                duration: 42,
+                requiredFactions: ["earth_mage", "deep_shaft"],
+                icons: ["🔮", "🕳️"],
+                choices: [
+                        { text: "Pozwól magom dokończyć czar (Magowie +20%, Szyb -15%)", action: () => { factionMultipliers.earth_mage += 0.20; factionMultipliers.deep_shaft -= 0.15; } },
+                        { text: "Uziem magiczne anomalie (Szyb +15%, Magowie -10%)", action: () => { factionMultipliers.deep_shaft += 0.15; factionMultipliers.earth_mage -= 0.10; } }
+                ]
+        },
+        {
+                title: "Mikstura Wydajności",
+                desc: "Alchemicy testują doping na Górnikach. Robotnicy pracują jak szaleni, ale szybko lądują w lazarecie.",
+                duration: 38,
+                requiredFactions: ["alchemic", "miner"],
+                icons: ["🧪", "⛏️"],
+                choices: [
+                        { text: "Zwiększ dawkę sterydu (Alchemicy +20%, Górnicy -15%)", action: () => { factionMultipliers.alchemic += 0.20; factionMultipliers.miner -= 0.15; } },
+                        { text: "Podawaj tylko mleko (Górnicy +15%, Alchemicy -10%)", action: () => { factionMultipliers.miner += 0.15; factionMultipliers.alchemic -= 0.10; } }
+                ]
+        },
+        {
+                title: "Oślepiający Blask",
+                desc: "Wieża Klejnotów emituje tak silne światło, że Inspektorzy Kopalni nie są w stanie przeprowadzać kontroli powierzchniowych.",
+                duration: 35,
+                requiredFactions: ["gem_tower", "mine_inspector"],
+                icons: ["💎", "📋"],
+                choices: [
+                        { text: "Przyćmij moc wieży (Inspektor +15%, Wieża -10%)", action: () => { factionMultipliers.mine_inspector += 0.15; factionMultipliers.gem_tower -= 0.10; } },
+                        { text: "Inspektorzy dostaną gogle (Wieża +20%, Inspektor -15%)", action: () => { factionMultipliers.gem_tower += 0.20; factionMultipliers.mine_inspector -= 0.15; } }
+                ]
+        },
+        {
+                title: "Kruszenie Granitu",
+                desc: "Żelazne Młoty zużywają najlepsze dłuta z Kamieniołomu, nie zostawiając narzędzi dla samych robotników odłamujących bloki.",
+                duration: 40,
+                requiredFactions: ["iron_hammers", "quarry"],
+                icons: ["🛡️", "🪨"],
+                choices: [
+                        { text: "Zostaw stal dla kowali (Młoty +15%, Kamieniołom -10%)", action: () => { factionMultipliers.iron_hammers += 0.15; factionMultipliers.quarry -= 0.10; } },
+                        { text: "Zabezpiecz narzędzia kamieniarzy (Kamieniołom +20%, Młoty -15%)", action: () => { factionMultipliers.quarry += 0.20; factionMultipliers.iron_hammers -= 0.15; } }
+                ]
+        },
+        {
+                title: "Mechaniczny Ostrzał",
+                desc: "Katapulty uszkodziły systemy sterowania Runicznych Golemów podczas ćwiczeń bojowych na poligonie.",
+                duration: 45,
+                requiredFactions: ["catapult", "runic_golem"],
+                icons: ["🏹", "🤖"],
+                choices: [
+                        { text: "Kalibruj trajektorię (Katapulty +15%, Golemy -10%)", action: () => { factionMultipliers.catapult += 0.15; factionMultipliers.runic_golem -= 0.10; } },
+                        { text: "Napraw podzespoły golemów (Golemy +20%, Katapulty -15%)", action: () => { factionMultipliers.runic_golem += 0.20; factionMultipliers.catapult -= 0.15; } }
+                ]
+        },
+        {
+                title: "Alchemia Głębin",
+                desc: "Alchemicy wpuszczają żrące kwasy do Głębokiego Szybu, próbując rozpuścić twarde skały. Chodnik grozi zawaleniem.",
+                duration: 40,
+                requiredFactions: ["alchemic", "deep_shaft"],
+                icons: ["🧪", "🕳️"],
+                choices: [
+                        { text: "Agresywne rozpuszczanie (Alchemicy +20%, Szyb -15%)", action: () => { factionMultipliers.alchemic += 0.20; factionMultipliers.deep_shaft -= 0.15; } },
+                        { text: "Zabezpiecz szalunki szybów (Szyb +15%, Alchemicy -10%)", action: () => { factionMultipliers.deep_shaft += 0.15; factionMultipliers.alchemic -= 0.10; } }
+                ]
+        },
+        {
+                title: "Magia Kontrolowana",
+                desc: "Inspektor Kopalni żąda od Magów Ziemi rejestracji każdego rzuconego czaru pod groźbą zablokowania ich gildii.",
+                duration: 35,
+                requiredFactions: ["mine_inspector", "earth_mage"],
+                icons: ["📋", "🔮"],
+                choices: [
+                        { text: "Wprowadź księgi zaklęć (Inspektor +20%, Magowie -15%)", action: () => { factionMultipliers.mine_inspector += 0.20; factionMultipliers.earth_mage -= 0.15; } },
+                        { text: "Wolność czarowania! (Magowie +15%, Inspektor -10%)", action: () => { factionMultipliers.earth_mage += 0.15; factionMultipliers.mine_inspector -= 0.10; } }
+                ]
+        },
+        {
+                title: "Pole Krystaliczne",
+                desc: "Wieża Klejnotów rezonuje z kryształami w Kamieniołomie, utwardzając granit tak mocno, że nie da się go odłupać.",
+                duration: 42,
+                requiredFactions: ["gem_tower", "quarry"],
+                icons: ["💎", "🪨"],
+                choices: [
+                        { text: "Przeciąż emiter wieży (Wieża +20%, Kamieniołom -15%)", action: () => { factionMultipliers.gem_tower += 0.20; factionMultipliers.quarry -= 0.15; } },
+                        { text: "Rozładuj pole energetyczne (Kamieniołom +15%, Wieża -10%)", action: () => { factionMultipliers.quarry += 0.15; factionMultipliers.gem_tower -= 0.10; } }
+                ]
+        },
+        {
+                title: "Ostrzał Oblężniczy",
+                desc: "Dowództwo Katapult chce wyburzyć strefy wejściowe Głębokiego Szybu, by zrobić miejsce na stałe stanowiska bojowe.",
+                duration: 40,
+                requiredFactions: ["catapult", "deep_shaft"],
+                icons: ["🏹", "🕳️"],
+                choices: [
+                        { text: "Zbuduj stanowiska ogniowe (Katapulty +20%, Szyb -20%)", action: () => { factionMultipliers.catapult += 0.20; factionMultipliers.deep_shaft -= 0.20; } },
+                        { text: "Chroń infrastrukturę szybu (Szyb +15%, Katapulty -10%)", action: () => { factionMultipliers.deep_shaft += 0.15; factionMultipliers.catapult -= 0.10; } }
+                ]
+        }
+];
+function triggerRandomCrisis() {
+        if (activeCrisis) return;
 
-function startMission(missionId) {
-        const mission = missionsState.find(m => m.id === missionId);
-        if (!mission || mission.active) return;
-        if (!playerOwnsRequirements(mission)) return;
+        const randomIndex = Math.floor(Math.random() * crisisPool.length);
+        activeCrisis = { ...crisisPool[randomIndex], timeLeft: crisisPool[randomIndex].duration };
 
-        if (!playerAssignedRequirements(mission)) {
-                alert("Nie przypisałeś wszystkich wymaganych jednostek do tej misji!");
+        const container = document.getElementById('faction-crisis-container');
+        const titleEl = document.getElementById('crisis-title');
+        const descEl = document.getElementById('crisis-desc');
+        const choicesBox = document.getElementById('crisis-choices');
+
+        if (!container || !titleEl || !descEl || !choicesBox) {
+                console.warn("⚠️ Brak struktury UI dla kryzysów w pliku HTML. Blokada crashu.");
+                activeCrisis = null;
                 return;
         }
 
-        let totalAssigned = Object.values(mission.setupUnits).reduce((a, b) => a + b, 0);
-        if (totalAssigned <= 0) return;
+        // AKTYWACJA WYKRZYKNIKA W SIDEBARZE
+        const alertBadge = document.getElementById('tavern-alert');
+        if (alertBadge) {
+                alertBadge.classList.remove('hidden');
+                alertBadge.style.color = '#ef4444'; // Krwisty czerwony
+                alertBadge.style.textShadow = '0 0 10px #ef4444, 0 0 20px #ef4444'; // Efekt świecenia (Glow)
+                alertBadge.style.fontWeight = 'bold';
+        }
 
+        // OBSŁUGA OKIENKA POPUP W STYLU GROMIRA (TYLKO PIERWSZY RAZ)
+        const crisisOverlay = document.getElementById('crisis-overlay');
+        const crisisPopupText = document.getElementById('crisis-popup-text');
+
+        if (crisisOverlay && crisisPopupText) {
+                if (!hasSeenCrisisTutorial) {
+                        // Pokazujemy popup TYLKO za pierwszym razem jako wprowadzenie do mechaniki
+                        crisisPopupText.innerHTML = `<b>Bratku, mamy dym w królestwie!</b> Właśnie aktywował się system kryzysów frakcyjnych. Górnicy i Zakon Żelaznych Młotów zaczynają walczyć o wpływy.<br><br>Każda Twoja decyzja zmieni ich wydajność, a zignorowanie czasu pogorszy relacje z obiema stronami!`;
+                        localStorage.setItem('hasSeenCrisisTutorial', 'true');
+                        hasSeenCrisisTutorial = true;
+
+                        // Pokazanie i obsługa zamknięcia okna tylko dla pierwszego razu
+                        crisisOverlay.classList.remove('hidden');
+                        crisisOverlay.onclick = () => crisisOverlay.classList.add('hidden');
+                }
+        }
+
+        container.className = 'rpg-window rpg-box active';
+        container.style.display = 'block';
+
+        titleEl.className = 'rpg-title';
+        titleEl.innerText = `⚔️ KRYZYS: ${activeCrisis.title}`;
+
+        descEl.className = 'rpg-dialog-text';
+        descEl.innerText = activeCrisis.desc;
+
+        choicesBox.innerHTML = "";
+        choicesBox.className = 'rpg-choices-container';
+
+        activeCrisis.choices.forEach((choice, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'rpg-button';
+                btn.innerText = choice.text;
+                btn.onclick = () => resolveCrisis(idx);
+                choicesBox.appendChild(btn);
+        });
+
+        crisisTimerId = setInterval(() => {
+                activeCrisis.timeLeft--;
+                const timerEl = document.getElementById('crisis-timer');
+                if (timerEl) {
+                        timerEl.className = 'rpg-timer';
+                        timerEl.innerText = `⏳ Czas: ${activeCrisis.timeLeft}s`;
+                }
+
+                if (activeCrisis.timeLeft <= 0) {
+                        clearInterval(crisisTimerId);
+                        // Dynamiczne karanie frakcji biorących udział w konflikcie
+                        activeCrisis.requiredFactions.forEach(fac => {
+                                if (factionMultipliers[fac] !== undefined) {
+                                        factionMultipliers[fac] -= 0.15;
+                                }
+                        });
+                        endCrisisDisplay("⌛ Czas minął! Zaangażowane struktury straciły wydajność przez Twój brak zdecydowania!");
+                }
+        }, 1000);
+}
+
+function resolveCrisis(choiceIndex) {
+        clearInterval(crisisTimerId);
+        activeCrisis.choices[choiceIndex].action(); // Odpalenie wybranej modyfikacji ekonomii
+        endCrisisDisplay("✨ Konflikt zażegnany. Modyfikatory ekonomiczne zostały zaktualizowane!");
+}
+
+function endCrisisDisplay(message) {
+        alert(message);
+        activeCrisis = null;
+        const container = document.getElementById('faction-crisis-container');
+        if (container) container.style.display = 'none';
+
+        // CZYŚĆ WYKRZYKNIK PO ZAKOŃCZENIU KRYZYSU
+        const alertBadge = document.getElementById('tavern-alert');
+        if (alertBadge) alertBadge.classList.add('hidden');
+}
+
+// System sprawdzający co 30 sekund szansę (np. 30%) na pojawienie się kryzysu
+function startCrisisEngine() {
+        // Blokada: system rusza dopiero gdy gracz kupi chociaż jeden poziom Iron Hammer Order
+        crisisCheckIntervalId = setInterval(() => {
+                if (upgrades.iron_hammers.level > 0 && !activeCrisis && Math.random() < 0.3) {
+                        triggerRandomCrisis();
+                }
+        }, 90000);
+}
+function startMission(missionId) {
+        const mission = missionsState.find(m => m.id === missionId);
+        if (!mission || mission.active) return;
+
+        // Kontrola cooldownu 2 minut (120000 ms)
+        let now = Date.now();
+        if (now < globalMissionCooldownEnd) {
+                let secLeft = Math.ceil((globalMissionCooldownEnd - now) / 1000);
+                alert(`Ekspedycje są na cooldownie! Odczekaj jeszcze ${secLeft}s.`);
+                return;
+        }
+
+        if (!playerOwnsRequirements(mission)) return;
+
+        globalMissionCooldownEnd = Date.now() + 120000; // Ustawienie blokady na 2 minuty
         mission.active = true;
         mission.activeUnits = { ...mission.setupUnits };
         mission.timeLeft = mission.baseDuration;
@@ -1072,11 +1552,17 @@ function renderMissions() {
                 "Legendary": "#ffd700"
         };
 
+        let now = Date.now();
+        let rerollText = "🔄 Odśwież Tablicę (Koszt: 50K Gems 💎)";
+        if (now < rerollCooldownEnd) {
+                rerollText = `⏳ Cooldown odświeżania: ${Math.ceil((rerollCooldownEnd - now) / 1000)}s`;
+        }
+
         let htmlContent = `
         <div class="global-pool-info" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; padding: 15px;">
             <span>📜 Tablica Zleceń Królestwa Krasnoludów</span>
-            <button onclick="rerollMissionsBoard()" id="audio-toggle">
-                🔄 Odśwież Tablicę (Koszt: 50K Gems 💎)
+            <button onclick="rerollMissionsBoard()" id="audio-toggle" ${now < rerollCooldownEnd ? 'disabled' : ''}>
+                ${rerollText}
             </button>
         </div>
     `;
@@ -1088,7 +1574,7 @@ function renderMissions() {
                 if (m.active) {
                         let deployedList = Object.keys(m.activeUnits).filter(k => m.activeUnits[k] > 0).map(k => `${upgradeNames[k]}: ${m.activeUnits[k]}`).join(', ');
                         return `
-                <div class="mission-card active-mission">
+                        <div class="mission-card active-mission">
                     <div class="mission-timer-ring">${m.timeLeft}s</div>
                     <div class="mission-info">
                         <h3>${m.title} <span style="font-size:0.75rem; color:${rarityColor};">[${m.rarity}]</span></h3>
@@ -1155,7 +1641,7 @@ function renderMissions() {
                                         return `
                         <div class="mission-control-box">
                             <div class="control-info-wrapper">
-                                <span class="control-label">${upgradeNames[k]} (Dost: ${free}):</span>
+                                <span class="control-label">${upgradeNames[k]} (${free}/${upgrades[k].level}):</span>
                                 <div class="unit-analytics"><span>1x: +${formatNumber(singleUnitIncome)}/s</span><span class="separator">|</span><span>${sharePercent}%</span></div>
                             </div>
                             <div class="counter-actions">
@@ -1173,20 +1659,33 @@ function renderMissions() {
                 `;
                         }
 
-                        let btnText = "Uruchom Ekspedycję";
-                        if (!ownsAllReqs) btnText = "Brak wymaganych typów jednostek w kopalni";
-                        else if (!hasAllAssigned) btnText = "Przypisz brakujące jednostki (kliknij +)";
+                        let currentTotal = Object.values(m.setupUnits).reduce((a, b) => a + b, 0);
 
-                        return `
+                let btnText = "Uruchom Ekspedycję";
+                let isCooldownActive = now < globalMissionCooldownEnd;
+                
+                if (isCooldownActive) {
+                        btnText = `⏳ Cooldown wypraw: ${Math.ceil((globalMissionCooldownEnd - now) / 1000)}s`;
+                } else if (!ownsAllReqs) {
+                        btnText = "Brak wymaganych typów jednostek w kopalni";
+                } else if (!hasAllAssigned) {
+                        btnText = "Przypisz brakujące jednostki (kliknij +)";
+                }
+
+                return `
                 <div class="mission-card" style="border-left: 5px solid ${rarityColor}">
-                    <h3 style="color: ${rarityColor}">${m.title} <span style="font-size:1rem; font-family:'MedievalSharp'; font-weight:normal;">, <b>Rarity</b>: ${m.rarity}</span></h3>
+                    <h3 style="color: ${rarityColor}">${m.title} <span style="font-size:1rem; font-family:'MedievalSharp'; font-weight:normal;"> <b>Rarity</b>: ${m.rarity}</span></h3>
                     <p class="mission-desc">${m.desc}</p>
-                    <div class="mission-meta"><span>Czas: ${m.baseDuration}s</span><span>Zysk podstawowy: x${m.gemMultiplier}</span></div>
+                    <div class="mission-meta">
+                        <span>Czas: ${m.baseDuration}s</span>
+                        <span>Zysk podstawowy: x${m.gemMultiplier}</span>
+                        <span style="font-weight: bold; color: #cbd5e1;">👥 Załoga: ${currentTotal} / ${m.maxUnits}</span>
+                    </div>
                     
                     ${requirementsHTML}
                     ${unitSelectorsHTML}
                     
-                    <button onclick="startMission(${m.id})" class="btn-launch" ${expectedReward <= 0 || !hasAllAssigned || !ownsAllReqs ? 'disabled' : ''}>
+                    <button onclick="startMission(${m.id})" class="btn-launch" ${expectedReward <= 0 || !hasAllAssigned || !ownsAllReqs || isCooldownActive ? 'disabled' : ''}>
                         ${btnText}
                     </button>
                 </div>`;
@@ -1423,6 +1922,14 @@ function initPerkTooltips() {
         });
 }
 
+setInterval(() => {
+        const tavernTab = document.getElementById('tavern-tab');
+        // Odświeżaj widok tylko jeśli gracz ma otwartą zakładkę Karczmy
+        if (tavernTab && !tavernTab.classList.contains('hidden')) {
+                renderMissions();
+        }
+}, 1000);
+
 // Uruchomienie inicjalizacji tooltipów chwilę po załadowaniu skryptu
 setTimeout(initPerkTooltips, 600);
 // --- ZAPISY I DIALOGI ---
@@ -1493,19 +2000,24 @@ function gameLoop(timestamp) {
 
                         // --- INTEGRACJA PERKÓW Z APG DO EKONOMII ---
                         if (key === 'quarry') {
-                                if (crystalPerks.quarry[0].unlocked) income *= 1.25; // +25% prod
-                                if (crystalPerks.miner[2].unlocked) income *= (1 + upgrades.miner.level * 0.01); // +1% za poziom minera
+                                if (crystalPerks.quarry[0].unlocked) income *= 1.25;
+                                if (crystalPerks.miner[2].unlocked) income *= (1 + upgrades.miner.level * 0.01);
                         }
                         if (key === 'catapult' && crystalPerks.catapult[0].unlocked) {
-                                income *= 1.30; // +30% prod
+                                income *= 1.30;
                         }
                         if (key === 'iron_hammers' && crystalPerks.iron_hammer[0].unlocked) {
-                                income *= 1.25; // +25% prod
+                                income *= 1.25;
                         }
                         if (crystalPerks.mine_inspector[0].unlocked && (key === 'miner' || key === 'quarry')) {
-                                income *= 1.10; // +10% prod dla obu struktur
+                                income *= 1.10;
                         }
                         // -------------------------------------------
+
+                        // --- CHIRURGICZNE WPIĘCIE MNOŻNIKÓW FRAKCJI ---
+                        if (key === 'miner') income *= factionMultipliers.miner;
+                        if (key === 'iron_hammers') income *= factionMultipliers.iron_hammers;
+                        // ----------------------------------------------
 
                         let shopKey = key === 'miner' ? 'miner_gear' : key === 'quarry' ? 'quarry_gear' : key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
                         if (key === 'mine_inspector') shopKey = 'inspector_gear';
@@ -1584,64 +2096,50 @@ function silentLoad() {
                         return;
                 }
 
-                // Wczytywanie podstawowych walut i flag logicznych
                 if (typeof parsed.gems === "number") gems = parsed.gems;
                 if (typeof parsed.magicalCrystals === "number") magicalCrystals = parsed.magicalCrystals;
                 if (typeof parsed.crystals_bought === "number") crystals_bought = parsed.crystals_bought;
+                if (typeof parsed.currentTrackIndex === "number") currentTrackIndex = parsed.currentTrackIndex;
+                if (typeof parsed.isTutorialPassed === "boolean") isTutorialPassed = parsed.isTutorialPassed;
                 if (typeof parsed.isTavernUnlocked === "boolean") isTavernUnlocked = parsed.isTavernUnlocked;
                 if (typeof parsed.isAltarUnlocked === "boolean") isAltarUnlocked = parsed.isAltarUnlocked;
-                if (typeof parsed.isTutorialPassed === "boolean") {
-                        isTutorialPassed = parsed.isTutorialPassed;
-                        if (isTutorialPassed && tutorialOverlay) tutorialOverlay.style.display = 'none';
-                }
 
-                // BEZPIECZNE wczytywanie poziomów struktur kopalni (zapobiega crashom przy braku danych)
                 if (parsed.upgrades) {
-                        Object.keys(upgrades).forEach(key => {
-                                if (parsed.upgrades[key]) {
-                                        if (typeof parsed.upgrades[key].level === "number") upgrades[key].level = parsed.upgrades[key].level;
-                                        if (typeof parsed.upgrades[key].cost === "number") upgrades[key].cost = parsed.upgrades[key].cost;
+                        Object.keys(parsed.upgrades).forEach(key => {
+                                if (upgrades[key]) {
+                                        upgrades[key].level = parsed.upgrades[key].level;
+                                        upgrades[key].cost = parsed.upgrades[key].cost;
+                                        upgrades[key].efficiency = parsed.upgrades[key].efficiency;
                                 }
                         });
                 }
-
-                // BEZPIECZNE wczytywanie ulepszeń stałych ze sklepu
                 if (parsed.shopUpgrades) {
-                        Object.keys(shopUpgrades).forEach(key => {
-                                if (parsed.shopUpgrades[key]) {
-                                        if (typeof parsed.shopUpgrades[key].level === "number") shopUpgrades[key].level = parsed.shopUpgrades[key].level;
-                                        if (typeof parsed.shopUpgrades[key].cost === "number") shopUpgrades[key].cost = parsed.shopUpgrades[key].cost;
+                        Object.keys(parsed.shopUpgrades).forEach(key => {
+                                if (shopUpgrades[key]) {
+                                        shopUpgrades[key].level = parsed.shopUpgrades[key].level;
+                                        shopUpgrades[key].cost = parsed.shopUpgrades[key].cost;
                                 }
                         });
                 }
-
-                // BEZPIECZNE przywracanie odblokowanych perków kryształowych
                 if (parsed.crystalPerksData) {
                         Object.keys(parsed.crystalPerksData).forEach(unit => {
-                                if (crystalPerks[unit] && Array.isArray(parsed.crystalPerksData[unit])) {
-                                        parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
-                                                if (crystalPerks[unit][idx]) {
-                                                        crystalPerks[unit][idx].unlocked = !!unlockedState;
-                                                }
+                                if (crystalPerks[unit]) {
+                                        parsed.crystalPerksData[unit].forEach((unlocked, index) => {
+                                                if (crystalPerks[unit][index]) crystalPerks[unit][index].unlocked = unlocked;
                                         });
                                 }
                         });
                 }
-
-        } catch (e) {
-                console.error("Błąd odczytu pliku zapisu (użyto domyślnych wartości):", e);
+                initMissionsBoard();
+                renderMissions();
+        } catch (err) {
+                console.error("Błąd wczytywania zapisu:", err);
+                initMissionsBoard();
+                renderMissions();
         }
-
-        // GWARANCJA STABILNOŚCI: Te funkcje wykonają się ZAWSZE na końcu.
-        // Interfejs gry się załaduje, a pętla automatycznego zapisu nie zostanie zablokowana.
-        initMissionsBoard();
-        updateGems();
-        updateUpgradesUI();
-        updateShopUI();
-        updateAltarUI();
-        renderMissions();
 }
 silentLoad();
 renderMissions();
 renderAllPerks();
 initPerkTooltips();
+startCrisisEngine();
