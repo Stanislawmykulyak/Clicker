@@ -442,38 +442,83 @@ if (btnTransmuteAll) btnTransmuteAll.onclick = (e) => { e.stopPropagation(); con
 
 // --- JEDYNY, ZAAWANSOWANY SYSTEM MISJI (Z ROTACJĄ I WYMAGANIAMI) ---
 
-// Baza wszystkich dostępnych misji w grze (Pula, z której system losuje)
+// Rozbudowana baza misji (16 pozycji) – mniejsza szansa na zasypanie tablicy legendami!
 const allMissionsPool = [
+        // --- ZWYKŁE (Kolor Niebieski) ---
+        {
+                title: "Zbieranie Odłamków",
+                desc: "Przečeš jaskinie w poszukiwaniu drobnych kryształów porzuconych przez kilofy.",
+                baseDuration: 15,
+                gemMultiplier: 3,
+                rarity: "Normal",
+                requirements: { miner: 2 }
+        },
+        {
+                title: "Naprawa Wagoników",
+                desc: "Wagoniki transportowe torują drogę. Potrzebna natychmiastowa konserwacja osi.",
+                baseDuration: 25,
+                gemMultiplier: 5,
+                rarity: "Normal",
+                requirements: { miner: 5 }
+        },
         {
                 title: "Oczyszczenie Kopalni",
                 desc: "Wypędź potwory z dolnych poziomów, aby górnicy mogli bezpiecznie pracować.",
-                baseDuration: 30,
+                baseDuration: 35,
                 gemMultiplier: 8,
-                rarity: "Zwykła",
+                rarity: "Normal",
                 requirements: { iron_hammers: 3, mine_inspector: 1 }
         },
+        {
+                title: "Wzmocnienie Stropu",
+                desc: "Jeden z korytarzy zaczyna niebezpiecznie trzeszczeć. Wyślij wsparcie inżynieryjne.",
+                baseDuration: 45,
+                gemMultiplier: 10,
+                rarity: "Normal",
+                requirements: { miner: 4, quarry: 1 }
+        },
+
+        // --- RZADKIE (Kolor Zielony) ---
         {
                 title: "Eskorta Karawany",
                 desc: "Zabezpiecz transport rzadkich kryształów do królewskiego zamku.",
                 baseDuration: 60,
                 gemMultiplier: 15,
-                rarity: "Rzadka",
+                rarity: "Rare",
                 requirements: { miner: 10, catapult: 2 }
         },
         {
                 title: "Odzyskiwanie Zalanego Szybu",
                 desc: "Wypompuj toksyczną wodę i uratuj uwięziony ciężki sprzęt.",
-                baseDuration: 120,
-                gemMultiplier: 45,
-                rarity: "Rzadka",
+                baseDuration: 90,
+                gemMultiplier: 30,
+                rarity: "Rare",
                 requirements: { mine_inspector: 3, quarry: 2 }
         },
+        {
+                title: "Obrona przed Goblinami",
+                desc: "Zielonoskórzy próbują podkopać się pod nasz główny magazyn dynamitu.",
+                baseDuration: 100,
+                gemMultiplier: 40,
+                rarity: "Rare",
+                requirements: { catapult: 3, iron_hammers: 2 }
+        },
+        {
+                title: "Inspekcja Tuneli",
+                desc: "Główny Inspektor musi przeprowadzić rygorystyczne testy sejsmiczne w starych szybach.",
+                baseDuration: 120,
+                gemMultiplier: 50,
+                rarity: "Rare",
+                requirements: { mine_inspector: 2, miner: 15 }
+        },
+
+        // --- EPICKIE (Kolor Fioletowy) ---
         {
                 title: "Magiczne Przesilenie",
                 desc: "Ustaktywuj i zabezpiecz niestabilny energetycznie starożytny rdzeń.",
                 baseDuration: 180,
                 gemMultiplier: 90,
-                rarity: "Epicka",
+                rarity: "Epic",
                 requirements: { earth_mage: 2, runic_golem: 1 }
         },
         {
@@ -481,36 +526,70 @@ const allMissionsPool = [
                 desc: "Przewierć się przez najtwardszą skałę w poszukiwaniu mitycznych czarnych diamentów.",
                 baseDuration: 240,
                 gemMultiplier: 150,
-                rarity: "Epicka",
+                rarity: "Epic",
                 requirements: { deep_shaft: 1, mine_inspector: 5, iron_hammers: 8 }
         },
         {
+                title: "Wydobycie Żyły Mithrilu",
+                desc: "Odkryto kieszeń powietrzną pełną czystego Mithrilu. Skała jest niezwykle twarda.",
+                baseDuration: 280,
+                gemMultiplier: 220,
+                rarity: "Epic",
+                requirements: { quarry: 8, iron_hammers: 5, runic_golem: 2 }
+        },
+
+        // --- MITYCZNE (Kolor Pomarańczowy) ---
+        {
+                title: "Rytuał Proroka Słońca",
+                desc: "Magowie Ziemi muszą okiełznać podziemną magię, aby nasycić wieże nową energią.",
+                baseDuration: 350,
+                gemMultiplier: 500,
+                rarity: "Mythic",
+                requirements: { earth_mage: 5, alchemic: 3, gem_tower: 1 }
+        },
+        {
+                title: "Pieczęć Głębin",
+                desc: "Pradawne zło próbuje przedostać się przez najniższy szyb. Zabarykaduj przejście.",
+                baseDuration: 420,
+                gemMultiplier: 750,
+                rarity: "Mythic",
+                requirements: { deep_shaft: 3, runic_golem: 4, mine_inspector: 10 }
+        },
+
+        // --- LEGENDARNE (Kolor Złoty) ---
+        {
                 title: "Alchemiczna Transmutacja Żyły",
                 desc: "Nasyć całą żyłę skały czystą magią, ryzykując potężną eksplozję.",
-                baseDuration: 300,
-                gemMultiplier: 400,
-                rarity: "Legendarna",
+                baseDuration: 500,
+                gemMultiplier: 1100,
+                rarity: "Legendary",
                 requirements: { alchemic: 2, earth_mage: 3, gem_tower: 1 }
         },
         {
                 title: "Polowanie na Czerwonego Smoka",
                 desc: "Legenda głosi, że w najgłębszych jaskiniach zalęgła się bestia. Wyślij elitę.",
                 baseDuration: 600,
-                gemMultiplier: 1200,
-                rarity: "Legendarna",
+                gemMultiplier: 1500,
+                rarity: "Legendary",
                 requirements: { runic_golem: 5, iron_hammers: 15, gem_tower: 3 }
+        },
+        {
+                title: "Przebudzenie Tytana Ziemi",
+                desc: "Obywatelski obowiązek wzywa. Przebudź i okiełznaj potęgę kolosa, który śpi pod jądrem kopalni.",
+                baseDuration: 750,
+                gemMultiplier: 2500,
+                rarity: "Legendary",
+                requirements: { gem_tower: 5, deep_shaft: 5, runic_golem: 10 }
         }
 ];
 
 // Aktywne misje na tablicy (3 sloty)
 let missionsState = [];
 
-// Funkcja losująca losową misję z puli i przygotowująca ją do wyświetlenia
 function generateRandomMission(slotId) {
         const randomIndex = Math.floor(Math.random() * allMissionsPool.length);
         const rawMission = allMissionsPool[randomIndex];
 
-        // Zwracamy głęboką kopię obiektu misji z unikalnymi właściwościami runtime
         return {
                 id: slotId,
                 title: rawMission.title,
@@ -526,7 +605,6 @@ function generateRandomMission(slotId) {
         };
 }
 
-// Inicjalizacja tablicy misji (wypełnienie 3 slotów na starcie)
 function initMissionsBoard() {
         missionsState = [
                 generateRandomMission(1),
@@ -535,7 +613,6 @@ function initMissionsBoard() {
         ];
 }
 
-// WARUNEK 1: Sprawdza, czy gracz w ogóle posiada zakupione odpowiednie jednostki w kopalni
 function playerOwnsRequirements(mission) {
     if (!mission.requirements) return true;
     for (let unitKey in mission.requirements) {
@@ -546,7 +623,6 @@ function playerOwnsRequirements(mission) {
     return true;
 }
 
-// WARUNEK 2: Sprawdza, czy gracz FAKTYCZNIE PRZYDZIELIŁ (kliknął +) odpowiednią ilość jednostek do slotu misji
 function playerAssignedRequirements(mission) {
     if (!mission.requirements) return true;
     for (let unitKey in mission.requirements) {
@@ -558,7 +634,6 @@ function playerAssignedRequirements(mission) {
     return true;
 }
 
-// Zwraca wolne (niepracujące) jednostki danej frakcji
 function getFreeUnits(unitKey) {
         let busyUnits = 0;
         missionsState.forEach(m => {
@@ -568,7 +643,6 @@ function getFreeUnits(unitKey) {
         return upgrades[unitKey].level - busyUnits;
 }
 
-// Obliczanie nagrody za misję
 function calculateMissionReward(mission, unitsAllocation) {
         let totalPower = 0;
         Object.keys(unitsAllocation).forEach(key => {
@@ -588,7 +662,7 @@ function calculateMissionReward(mission, unitsAllocation) {
 function changeMissionUnits(missionId, unitKey, amount) {
         const mission = missionsState.find(m => m.id === missionId);
         if (!mission || mission.active) return;
-        if (!playerOwnsRequirements(mission)) return; // POPRAWIONE: Zmieniono nazwę niedziałającej funkcji
+        if (!playerOwnsRequirements(mission)) return;
 
         if (!mission.setupUnits[unitKey]) mission.setupUnits[unitKey] = 0;
         if (amount > 0 && amount <= getFreeUnits(unitKey)) { mission.setupUnits[unitKey] += amount; }
@@ -599,7 +673,7 @@ function changeMissionUnits(missionId, unitKey, amount) {
 function setMissionUnits(missionId, unitKey, value) {
         const mission = missionsState.find(m => m.id === missionId);
         if (!mission || mission.active) return;
-        if (!playerOwnsRequirements(mission)) return; // POPRAWIONE: Zmieniono nazwę niedziałającej funkcji
+        if (!playerOwnsRequirements(mission)) return;
 
         let parsedValue = Math.max(0, parseInt(value) || 0);
         let currentSetup = mission.setupUnits[unitKey] || 0;
@@ -609,7 +683,6 @@ function setMissionUnits(missionId, unitKey, value) {
         renderMissions();
 }
 
-// Reroll całej tablicy za klejnoty
 function rerollMissionsBoard() {
         const rerollCost = 50000;
         if (gems >= rerollCost) {
@@ -632,7 +705,6 @@ function startMission(missionId) {
         if (!mission || mission.active) return;
         if (!playerOwnsRequirements(mission)) return;
         
-        // Sprawdzenie, czy jednostki zostały przypisane fizycznie do tej konkretnej misji
         if (!playerAssignedRequirements(mission)) {
                 alert("Nie przypisałeś wszystkich wymaganych jednostek do tej misji!");
                 return;
@@ -664,7 +736,15 @@ function renderMissions() {
         if (!container) return;
 
         const upgradeNames = { miner: "Miner", quarry: "Quarry", catapult: "Catapult", iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector", runic_golem: "Runic Golem", alchemic: "Alchemic", earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower" };
-        const rarityColors = { "Zwykła": "#cbd5e1", "Rzadka": "#3b82f6", "Epicka": "#a855f7", "Legendarna": "#eab308" };
+        
+        // NOWE KOLORY: Zgodnie z Twoim życzeniem (Zwykła=Niebieska, Rzadka=Zielona, Mityczna=Pomarańczowa, Legendarna=Złota)
+        const rarityColors = { 
+                "Normal": "#3b82f6", 
+                "Rare": "#22c55e", 
+                "Epic": "#a855f7", 
+                "Mythic": "#f97316", 
+                "Legendary": "#ffd700" 
+        };
 
         let htmlContent = `
         <div class="global-pool-info" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; padding: 15px;">
@@ -692,7 +772,6 @@ function renderMissions() {
                     </div>
                 </div>`;
                 } else {
-                        // Dynamiczna weryfikacja stanu
                         let requirementsHTML = "";
                         let ownsAllReqs = playerOwnsRequirements(m);
                         let hasAllAssigned = playerAssignedRequirements(m);
@@ -705,7 +784,7 @@ function renderMissions() {
 
                                 Object.keys(m.requirements).forEach(unitKey => {
                                         const reqAmount = m.requirements[unitKey];
-                                        const assignedAmount = m.setupUnits[unitKey] || 0; // Sprawdzamy stan przypisania z poziomu tablicy
+                                        const assignedAmount = m.setupUnits[unitKey] || 0;
                                         const playerTotalOwned = upgrades[unitKey]?.level || 0;
                                         const hasEnoughAssigned = assignedAmount >= reqAmount;
 
@@ -734,7 +813,6 @@ function renderMissions() {
 
                         let unlockedUnits = Object.keys(upgrades).filter(k => upgrades[k].level > 0);
 
-                        // Selektory pokazują się tylko jeśli gracz zakupił minimalne poziomy bazowe w kopalni
                         let unitSelectorsHTML = "";
                         if (ownsAllReqs) {
                                 unitSelectorsHTML = unlockedUnits.map(k => {
@@ -769,14 +847,13 @@ function renderMissions() {
                 `;
                         }
 
-                        // Ustalenie komunikatu i aktywności głównego przycisku ekspedycji
                         let btnText = "Uruchom Ekspedycję";
                         if (!ownsAllReqs) btnText = "Brak wymaganych typów jednostek w kopalni";
                         else if (!hasAllAssigned) btnText = "Przypisz brakujące jednostki (kliknij +)";
 
                         return `
                 <div class="mission-card" style="border-left: 5px solid ${rarityColor}">
-                    <h3>${m.title} <span style="font-size:0.8rem; color:${rarityColor}; font-family:'MedievalSharp'; font-weight:normal;">[Rarytas: ${m.rarity}]</span></h3>
+                    <h3 style="color: ${rarityColor}">${m.title} <span style="font-size:1rem; font-family:'MedievalSharp'; font-weight:normal;">, <b>Rarity</b>: ${m.rarity}</span></h3>
                     <p class="mission-desc">${m.desc}</p>
                     <div class="mission-meta"><span>Czas: ${m.baseDuration}s</span><span>Zysk podstawowy: x${m.gemMultiplier}</span></div>
                     
@@ -795,7 +872,6 @@ function renderMissions() {
 
 // Inicjalizacja tablicy na starcie gry
 initMissionsBoard();
-// --- ZARZĄDZANIE PASKIEM BOCZNYM ---
 function handleSidebarNavigation() {
         const sidebarButtons = document.querySelectorAll('.sidebar-btn');
         const tabContents = document.querySelectorAll('.tab-content');
