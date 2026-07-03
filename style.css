@@ -1190,3 +1190,59 @@ body {
     background: #dc2626;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
+.perks-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.perk-button {
+    width: 40px;
+    height: 40px;
+    background-color: #3a2f4c;
+    border: 2px solid #5d4778;
+    border-radius: 6px;
+    color: #e0d6ff;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.perk-button:hover {
+    background-color: #4c3d63;
+    border-color: #a382db;
+}
+
+.perk-button.unlocked {
+    background-color: #246939;
+    border-color: #4cd175;
+    color: #fff;
+    cursor: default;
+}
+
+/* Prosty tooltip po najechaniu myszką */
+.perk-button::after {
+    content: attr(data-desc);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #111;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: normal;
+    width: 160px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.perk-button:hover::after {
+    opacity: 1;
+}

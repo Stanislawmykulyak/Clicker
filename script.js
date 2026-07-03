@@ -65,6 +65,8 @@ if (audioBtn) {
         };
 }
 
+
+
 function formatNumber(num) {
         if (num === 0) return "0";
         if (num < 1000) {
@@ -104,6 +106,107 @@ function createFloatingText(x, y, amount, isLucky) {
         setTimeout(() => { textNode.remove(); }, 700);
 }
 
+function getQuarryGPS() {
+    let baseProduction = gameState.quarryCount * 10; // Przykładowa bazowa produkcja
+    
+    // Perk 1 dla Quarry: +25% produkcji
+    if (crystalPerks.quarry[0].unlocked) {
+        baseProduction *= 1.25;
+    }
+    
+    // Perk 3 dla Minera: Każdy poziom minera daje +1% do Quarry
+    if (crystalPerks.miner[2].unlocked) {
+        let bonus = 1 + (gameState.minerCount * 0.01);
+        baseProduction *= bonus;
+    }
+    
+    return baseProduction;
+}
+
+function getMissionDuration(baseDuration) {
+    let duration = baseDuration;
+
+    // Perk 1 dla Minera: -10% czasu misji
+    if (crystalPerks.miner[0].unlocked) {
+        duration *= 0.90;
+    }
+    
+    return duration;
+}
+
+function getCatapultCost() {
+    let baseCost = 50000; // Twój algorytm skalowania kosztu katapulty
+    
+    // Perk 3 dla Quarry: -10% kosztu Katapult
+    if (crystalPerks.quarry[2].unlocked) {
+        baseCost *= 0.90;
+    }
+    return baseCost;
+}
+
+function handleRockClick() {
+    let baseCritChance = 0.05; // standardowo 5% szansy
+    
+    // Perk 2 dla Minera: +3% szansy na kryta
+    if (crystalPerks.miner[1].unlocked) {
+        baseCritChance += 0.03;
+    }
+    
+    // Reszta Twojej logiki kliknięcia losująca kryta...
+}
+
+function renderAllPerks() {
+    // Jeśli gracz jeszcze nie odblokował Ołtarza, możemy ukryć perki (opcjonalnie)
+    // if (!gameState.isAltarUnlocked) return; 
+
+    for (let unit in crystalPerks) {
+        let container = document.getElementById(`perks-${unit}`);
+        if (!container) continue;
+
+        container.innerHTML = ""; // Czyszczenie starych przycisków
+
+        crystalPerks[unit].forEach((perk, index) => {
+            let btn = document.createElement("button");
+            btn.className = `perk-button ${perk.unlocked ? 'unlocked' : ''}`;
+            
+            // Wyświetlamy rzymską cyfrę I, II, III lub koszt jeśli zablokowany
+            btn.innerText = perk.unlocked ? "✓" : (index + 1);
+            
+            // Pełny opis wraz z kosztem w podpowiedzi (tooltip)
+            let tooltipText = `${perk.name}: ${perk.desc} ${perk.unlocked ? '(Odblokowano)' : `[Koszt: ${perk.cost} Kryształów]`}`;
+            btn.setAttribute("data-desc", tooltipText);
+
+            // Akcja po kliknięciu
+            if (!perk.unlocked) {
+                btn.onclick = () => buyCrystalPerk(unit, index);
+            }
+
+            container.appendChild(btn);
+        });
+    }
+}
+
+// Funkcja zakupu perka
+function buyCrystalPerk(unit, index) {
+    let perk = crystalPerks[unit][index];
+
+    // DOPASUJ: Zmień 'gameState.magicalCrystals' na swoją faktyczną zmienną kryształów!
+    if (gameState.magicalCrystals >= perk.cost && !perk.unlocked) {
+        gameState.magicalCrystals -= perk.cost;
+        perk.unlocked = true;
+
+        // Odświeżamy UI kryształów i perków
+        updateUI(); 
+        renderAllPerks();
+        
+        console.log(`Odblokowano perk: ${perk.name} dla ${unit}`);
+    } else if (perk.unlocked) {
+        alert("Ten talent jest już odblokowany!");
+    } else {
+        alert("Nie masz wystarczającej liczby Magicznych Kryształów!");
+    }
+}
+
 const rockImg = document.querySelector('.GemRock img');
 
 if (accRock) {
@@ -135,6 +238,33 @@ if (accRock) {
                 createFloatingText(e.clientX, e.clientY, gainedGems, isLucky);
         });
 }
+let crystalPerks = {
+    miner: [
+        { id: "miner_p1", name: "Szybkie Buty", cost: 3, unlocked: false, desc: "Skraca bazowy czas wszystkich misji w Karczmie o 10%." },
+        { id: "miner_p2", name: "Szczęśliwy Kilof", cost: 7, unlocked: false, desc: "Zwiększa szansę na krytyczne kliknięcie o 3%." },
+        { id: "miner_p3", name: "Górniczy Sojusz", cost: 15, unlocked: false, desc: "Każdy poziom Minera zwiększa produkcję Quarry o 1%." }
+    ],
+    quarry: [
+        { id: "quarry_p1", name: "Głębokie Odkrywki", cost: 5, unlocked: false, desc: "Zwiększa produkcję Quarry o 25%." },
+        { id: "quarry_p2", name: "Kamienny Pancerz", cost: 10, unlocked: false, desc: "Zwiększa zyski Gems z misji typu 'Walka/Obrona' o 20%." },
+        { id: "quarry_p3", name: "Optymalizacja Masowa", cost: 20, unlocked: false, desc: "Zmniejsza koszt zakupu Catapult o 10%." }
+    ],
+    catapult: [
+        { id: "catapult_p1", name: "Dłuższy Zasięg", cost: 8, unlocked: false, desc: "Zwiększa produkcję Catapult o 30%." },
+        { id: "catapult_p2", name: "Wsparcie Artylerii", cost: 15, unlocked: false, desc: "Misje w Karczmie trwają o 15% krócej, jeśli przypiszesz min. 1 Katapultę." },
+        { id: "catapult_p3", name: "Grad Kamieni", cost: 30, unlocked: false, desc: "Odblokowuje aktywną umiejętność (Zrzut głazów raz na 5 min)." }
+    ],
+    iron_hammer: [
+        { id: "iron_hammer_p1", name: "Kowalska Precyzja", cost: 10, unlocked: false, desc: "Zwiększa produkcję Iron Hammer o 25%." },
+        { id: "iron_hammer_p2", name: "Zbrojna Eskorta", cost: 18, unlocked: false, desc: "Zmniejsza koszt odświeżenia tablicy misji (Reroll) o 50%." },
+        { id: "iron_hammer_p3", name: "Hartowanie Stali", cost: 35, unlocked: false, desc: "Każdy posiadany Iron Hammer zwiększa Twoją siłę kliknięcia o +5 Gems." }
+    ],
+    mine_inspector: [
+        { id: "mine_inspector_p1", name: "Srogie Oko", cost: 15, unlocked: false, desc: "Zwiększa efektywność Minerów i Quarry o dodatkowe 10%." },
+        { id: "mine_inspector_p2", name: "Biurokracja", cost: 25, unlocked: false, desc: "Zwiększa nagrody Gems ze wszystkich misji o 20%." },
+        { id: "mine_inspector_p3", name: "Audyt Efektywności", cost: 50, unlocked: false, desc: "Zmniejsza bazowy koszt kolejnych poziomów Mine Inspector o 15%." }
+    ]
+};
 
 let upgrades = {
         miner: { baseCost: 15, cost: 15, efficiency: 0.1, level: 0, maxLevel: 100, milestones: { 10: 2, 25: 2, 50: 2, 100: 5 } },
@@ -246,13 +376,13 @@ function buyUpgrade(upgradeKey) {
         let isUnlocked = true;
         if (upgradeKey === 'quarry' && upgrades.miner.level < 5) isUnlocked = false;
         if (upgradeKey === 'catapult' && upgrades.miner.level < 5) isUnlocked = false;
-        if (upgradeKey === 'iron_hammers' && upgrades.catapult.level < 9) isUnlocked = false;
-        if (upgradeKey === 'mine_inspector' && upgrades.iron_hammers.level < 9) isUnlocked = false;
-        if (upgradeKey === 'runic_golem' && upgrades.mine_inspector.level < 9) isUnlocked = false;
-        if (upgradeKey === 'alchemic' && upgrades.runic_golem.level < 9) isUnlocked = false;
-        if (upgradeKey === 'earth_mage' && upgrades.alchemic.level < 9) isUnlocked = false;
-        if (upgradeKey === 'deep_shaft' && upgrades.earth_mage.level < 9) isUnlocked = false;
-        if (upgradeKey === 'gem_tower' && upgrades.deep_shaft.level < 9) isUnlocked = false;
+        if (upgradeKey === 'iron_hammers' && upgrades.catapult.level < 10) isUnlocked = false;
+        if (upgradeKey === 'mine_inspector' && upgrades.iron_hammers.level < 10) isUnlocked = false;
+        if (upgradeKey === 'runic_golem' && upgrades.mine_inspector.level < 10) isUnlocked = false;
+        if (upgradeKey === 'alchemic' && upgrades.runic_golem.level < 10) isUnlocked = false;
+        if (upgradeKey === 'earth_mage' && upgrades.alchemic.level < 10) isUnlocked = false;
+        if (upgradeKey === 'deep_shaft' && upgrades.earth_mage.level < 10) isUnlocked = false;
+        if (upgradeKey === 'gem_tower' && upgrades.deep_shaft.level < 10) isUnlocked = false;
 
         if (!isUnlocked) return;
 
