@@ -220,9 +220,57 @@
     </div>
 
     <div id="altar-tab" class="tab-content hidden">
-        <div class="tab-placeholder">
-            <h2>✨ Ancient Altar</h2>
-            <p>Unlock sub-skills for your structures using Magical Crystals here.</p>
+        <div class="altar-wrapper">
+            <h2 class="altar-title">✨ Ancient Altar of Transmutation</h2>
+            
+            <div class="altar-crystal-counter">Magical Crystals: <span id="crystal-count">0</span> 🔮</div>
+
+            <div class="altar-container" id="altar-core">
+                <div class="altar-glow-ring"></div>
+                <div class="altar-orb">🔮</div>
+            </div>
+
+            <div class="altar-exchange-box">
+                <p class="exchange-rate">Current Cost: <span id="crystal-cost-display" style="color: #ffd700; font-weight: bold;">1.00M</span> Gems 💎 per Crystal 🔮</p>
+                <div class="altar-actions">
+                    <button id="btn-transmute-1" class="btn-altar">Transmute 1 Crystal</button>
+                    <button id="btn-transmute-all" class="btn-altar">Transmute ALL Possible</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="sidebar-btn" data-tab="settings-tab">
+        <span>Ustawienia</span>
+    </button>
+    <div id="settings-tab" class="tab-content hidden">
+    <h2>Królewskie Ustawienia</h2>
+    <p style="color: #94a3b8; margin-bottom: 20px;">Zarządzaj swoimi zwojami zapisu, opcjami audio oraz postępem królestwa.</p>
+
+    <!-- Zapis / Odczyt -->
+    <div class="settings-group">
+        <h3>💾 Zarządzanie Zapisem</h3>
+            <div class="settings-actions">
+                <button onclick="saveGameToFile()" class="btn-settings">Eksportuj Zapis (Pobierz Zwój)</button>
+                
+                <label for="file-load-input" class="btn-settings label-load">Importuj Zapis (Wczytaj Zwój)</label>
+                <input type="file" id="file-load-input" onchange="loadGameFromFile(event)" style="display: none;" />
+            </div>
+        </div>
+
+        <!-- Kontrola audio -->
+        <div class="settings-group">
+            <h3>🎵 Nadworna Muzyka</h3>
+            <div class="settings-actions">
+                <button onclick="toggleMuteSettings()" id="settings-mute-btn" class="btn-settings">Wycisz Muzykę</button>
+                <button onclick="nextTrackSettings()" class="btn-settings">Następny Utwór ⏭️</button>
+            </div>
+        </div>
+
+        <!-- Strefa Zagrożenia (Hard Reset) -->
+        <div class="settings-group danger-zone">
+            <h3>⚠️ Strefa Zagrożenia</h3>
+            <p style="color: #f87171; font-size: 0.85rem; margin-bottom: 12px;">Spowoduje to bezpowrotne wyczyszczenie całego imperium, poziomów, złota i diamentów.</p>
+            <button onclick="resetProgress()" class="btn-reset">Zresetuj Cały Postęp</button>
         </div>
     </div>
     <script src="script.js"></script>

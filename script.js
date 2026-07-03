@@ -57,12 +57,12 @@ audioBtn.onclick = function (e) {
 
         if (bgMusic.paused) {
                 bgMusic.play();
-                audioBtn.innerHTML = "🔊 Muzyka: ON";
+                audioBtn.innerHTML = "🔊 Music: ON";
                 audioBtn.style.borderColor = "#475569";
                 isMuted = false;
         } else {
                 bgMusic.pause();
-                audioBtn.innerHTML = "🔇 Muzyka: OFF";
+                audioBtn.innerHTML = "🔇 Music: OFF";
                 audioBtn.style.borderColor = "#991b1b";
                 isMuted = true;
         }
@@ -75,7 +75,7 @@ function formatNumber(num) {
         return num % 1 === 0 ? num.toString() : num.toFixed(1);
     }
 
-    const suffixes = ["", "K", "M", "B", "T", "Q" ,];
+    const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
     
     const i = Math.floor(Math.log10(num) / 3);
 
@@ -233,6 +233,84 @@ let upgrades = {
                 milestones: { 10: 2, 25: 2, 50: 2, 100: 5 }
         }
 };
+function toggleMuteSettings() {
+    if (typeof isMuted !== 'undefined' && typeof bgMusic !== 'undefined') {
+        isMuted = !isMuted;
+        bgMusic.muted = isMuted;
+        
+        const muteBtn = document.getElementById('settings-mute-btn');
+        if (muteBtn) {
+            muteBtn.innerText = isMuted ? "Włącz Muzykę 🔊" : "Wycisz Muzykę 🔇";
+        }
+        
+        // Aktualizacja globalnego stanu zapisu w localStorage (opcjonalnie)
+        localStorage.setItem('clicker_muted', isMuted ? 'true' : 'false');
+        console.log(isMuted ? "Muzyka wyciszona." : "Muzyka włączona.");
+    }
+}
+
+function nextTrackSettings() {
+    if (typeof nextTrack === 'function') {
+        nextTrack(); // Wywołanie istniejącej już logiki zmiany piosenki
+        console.log("Zmieniono utwór na następny.");
+    } else if (typeof bgMusic !== 'undefined' && typeof playlist !== 'undefined' && typeof currentTrackIndex !== 'undefined') {
+        // Zabezpieczenie na wypadek braku globalnej funkcji nextTrack
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        bgMusic.src = playlist[currentTrackIndex];
+        if (!isMuted) bgMusic.play().catch(() => {});
+        localStorage.setItem('clicker_current_song_index', currentTrackIndex);
+    }
+}
+
+function resetProgress() {
+    // Pierwsza weryfikacja
+    const firstConfirm = confirm("⚠️ CZY NA PEWNO CHCESZ ZRESETOWAĆ POSTĘP?\n\nStracisz wszystkie zebrane klejnoty, kryształy, poziomy robotników oraz odblokowane ulepszenia w sklepie. Tej operacji NIE MOŻNA cofnąć.");
+    
+    if (firstConfirm) {
+        // Druga weryfikacja (zabezpieczenie przed przypadkowym kliknięciem)
+        const secondConfirm = confirm("🔥 OSTATECZNE OSTRZEŻENIE 🔥\n\nTwoje królestwo zostanie obrócone w pył, a Ty zaczniesz jako zwykły górnik z pustymi rękami. Czy kontynuować destrukt?");
+        
+        if (secondConfirm) {
+            // 1. Czyszczenie pamięci zapisu automatycznego
+            localStorage.removeItem('medieval_clicker_autosave');
+            localStorage.removeItem('clicker_tutorial_passed');
+            localStorage.removeItem('clicker_current_song_index');
+            
+            // 2. Zerowanie wartości systemowych w pamięci podręcznej okna
+            gems = 0;
+            if (typeof magicalCrystals !== 'undefined') magicalCrystals = 0;
+            isTutorialPassed = false;
+
+            // 3. Reset ulepszeń do wartości bazowych
+            if (typeof upgrades !== 'undefined') {
+                Object.keys(upgrades).forEach(key => {
+                    upgrades[key].level = 0;
+                    if (upgrades[key].baseCost) upgrades[key].cost = upgrades[key].baseCost;
+                });
+            }
+
+            if (typeof shopUpgrades !== 'undefined') {
+                Object.keys(shopUpgrades).forEach(key => {
+                    shopUpgrades[key].level = 0;
+                    if (shopUpgrades[key].baseCost) shopUpgrades[key].cost = shopUpgrades[key].baseCost;
+                });
+            }
+
+            console.log("Niszczenie starego świata powiodło się... Inicjalizacja nowego królestwa.");
+            
+            // 4. Przeładowanie strony w celu zresetowania zmiennych i interwałów czasowych
+            location.reload();
+        }
+    }
+}
+
+// Synchronizacja przycisku wyciszenia przy starcie (opcjonalnie)
+document.addEventListener("DOMContentLoaded", () => {
+    const muteBtn = document.getElementById('settings-mute-btn');
+    if (muteBtn && typeof isMuted !== 'undefined') {
+        muteBtn.innerText = isMuted ? "Włącz Muzykę 🔊" : "Wycisz Muzykę 🔇";
+    }
+});
 
 function updateUpgradesUI() {
         const upgradeNames = {
@@ -444,6 +522,507 @@ let shopUpgrades = {
 const storeTooltip = document.getElementById('store-tooltip');
 let currentActiveTooltipKey = null;
 
+// --- DYNAMIC SCALED ALTAR SYSTEM ---
+let magicalCrystals = 0;
+const baseCrystalCost = 1000000; // Koszt bazowy: 1 Milion
+const costMultiplier = 1.5;      // Skalowanie: +50% ceny za każdy posiadany kryształ
+
+const crystalCountEl = document.getElementById('crystal-count');
+const altarCore = document.getElementById('altar-core');
+const altarOrb = altarCore ? altarCore.querySelector('.altar-orb') : null;
+const btnTransmute1 = document.getElementById('btn-transmute-1');
+const btnTransmuteAll = document.getElementById('btn-transmute-all');
+
+// Funkcja formatująca duże liczby z suffixami (K, M, B, T...)
+function formatWithSuffix(value) {
+    if (value < 1000) return value.toFixed(0);
+    const suffixes = ["", "K", "M", "B", "T", "Q", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    const i = Math.floor(Math.log10(value) / 3);
+    const formatted = (value / Math.pow(10, i * 3)).toFixed(2);
+    return formatted + (suffixes[i] || "e" + (i * 3));
+}
+
+// Obliczanie aktualnego kosztu JEDNEGO kolejnego kryształu
+function getNextCrystalCost() {
+    return Math.floor(baseCrystalCost * Math.pow(costMultiplier, magicalCrystals));
+}
+
+// Obliczanie kosztu hurtowego dla przycisku ALL (symulacja bezpiecznej pętli)
+function getMaxCrystalsAffordable() {
+    let currentGems = gems;
+    let count = 0;
+    let totalCost = 0;
+    let tempCrystals = magicalCrystals;
+
+    while (true) {
+        let nextCost = Math.floor(baseCrystalCost * Math.pow(costMultiplier, tempCrystals));
+        if (currentGems >= nextCost) {
+            currentGems -= nextCost;
+            totalCost += nextCost;
+            tempCrystals++;
+            count++;
+        } else {
+            break;
+        }
+    }
+    return { amount: count, cost: totalCost };
+}
+
+// Funkcja aktualizacji UI Ołtarza
+function updateAltarUI() {
+    if (!crystalCountEl) return;
+    crystalCountEl.innerText = formatWithSuffix(magicalCrystals);
+
+    const nextCost = getNextCrystalCost();
+    const costDisplayEl = document.getElementById('crystal-cost-display');
+    if (costDisplayEl) {
+        costDisplayEl.innerText = formatWithSuffix(nextCost);
+    }
+
+    // Walidacja przycisku pojedynczego transmutowania
+    if (gems >= nextCost) {
+        btnTransmute1.disabled = false;
+        btnTransmute1.innerText = `Transmute 1 Crystal`;
+    } else {
+        btnTransmute1.disabled = true;
+        btnTransmute1.innerText = `Transmute 1 Crystal`;
+    }
+
+    // Walidacja przycisku transmutowania WSZYSTKIEGO
+    const maxAffordable = getMaxCrystalsAffordable();
+    if (maxAffordable.amount > 0) {
+        btnTransmuteAll.disabled = false;
+        btnTransmuteAll.innerText = `Transmute ALL (+${maxAffordable.amount})`;
+    } else {
+        btnTransmuteAll.disabled = true;
+        btnTransmuteAll.innerText = `Transmute ALL Possible`;
+    }
+}
+
+// Podpięcie pod pętlę gry
+const originalGameLoop = gameLoop;
+gameLoop = function(timestamp) {
+    originalGameLoop(timestamp);
+    updateAltarUI();
+};
+
+// RYTUAŁ TRANSMUTACJI (Z UWZGLĘDNIENIEM NOWEJ CENY)
+function performRitual(crystalAmount, totalCost) {
+    gems -= totalCost;
+    magicalCrystals += crystalAmount;
+    if (typeof updateGems === "function") updateGems();
+    updateAltarUI();
+
+    // 1. Audio tweak (przyciszenie tła pod sfx)
+    let originalVolume = bgMusic.volume;
+    if (!isMuted) {
+        bgMusic.volume = 0.1; 
+        const transSound = new Audio('media/transmutation.mp3'); 
+        transSound.volume = 1.0;
+        transSound.play().catch(()=>{});
+    }
+
+    // 2. Animacje wizualne ołtarza
+    if (altarCore && altarOrb) {
+        altarCore.classList.add('altar-shake');
+        altarOrb.classList.add('altar-blast');
+    }
+
+    // Generowanie magicznych particlesów
+    for(let i=0; i<30; i++) {
+        createAltarParticle();
+    }
+
+    // 3. Koniec inkantacji (po 800ms) i modal
+    setTimeout(() => {
+        if (altarCore && altarOrb) {
+            altarCore.classList.remove('altar-shake');
+            altarOrb.classList.remove('altar-blast');
+        }
+        if (!isMuted) bgMusic.volume = originalVolume;
+
+        spawnCongratsModal(crystalAmount);
+    }, 800);
+}
+// --- ZAAWANSOWANY SYSTEM PULI MISJI I WYMAGAŃ ---
+const MISSION_POOL = [
+    { id: 1, title: "Oczyszczanie Korytarzy z Goblinów", desc: "Plaga goblinów blokuje dolne szyby wydobywcze. Wymagane wsparcie bojowe i nadzór.", baseDuration: 25, gemMultiplier: 8, requiredUnits: { iron_hammers: 1, mine_inspector: 1 } },
+    { id: 2, title: "Głęboka Eskorta Szybu", desc: "Zabezpiecz najniższe korytarze przed dzikimi bestiami z głębi ziemi.", baseDuration: 15, gemMultiplier: 5, requiredUnits: { miner: 2 } },
+    { id: 3, title: "Ekstrakcja Kryształowej Żyły", desc: "Prowadź zaawansowane operacje wydobywcze w strefie niestabilnej tektonicznie.", baseDuration: 60, gemMultiplier: 18, requiredUnits: { quarry: 1, mine_inspector: 1 } },
+    { id: 4, title: "Odzyskiwanie Zalanego Szybu", desc: "Wypompuj toksyczną wodę i odzyskaj porzucone ciężkie maszyny górnicze.", baseDuration: 120, gemMultiplier: 45, requiredUnits: { alchemic: 1, miner: 3 } },
+    { id: 5, title: "Kalibracja Runicznego Golema", desc: "Zharmonizuj niestabilne rdzenie magiczne konstrukcji wewnątrz głównego kamieniołomu.", baseDuration: 90, gemMultiplier: 35, requiredUnits: { runic_golem: 1, earth_mage: 1 } },
+    { id: 6, title: "Uszczelnianie Magmowego Ujścia", desc: "Powstrzymaj ekstremalne ciśnienie geotermalne, zanim stopi górne poziomy operacyjne.", baseDuration: 180, gemMultiplier: 90, requiredUnits: { gem_tower: 1, deep_shaft: 1 } }
+];
+
+// Trzy stałe sloty na misje widoczne na tablicy
+let missionSlots = [
+    { status: "empty", mission: null, timeLeft: 0, setupUnits: {}, activeUnits: {}, cooldownLeft: 0, timerId: null, cooldownTimerId: null },
+    { status: "empty", mission: null, timeLeft: 0, setupUnits: {}, activeUnits: {}, cooldownLeft: 0, timerId: null, cooldownTimerId: null },
+    { status: "empty", mission: null, timeLeft: 0, setupUnits: {}, activeUnits: {}, cooldownLeft: 0, timerId: null, cooldownTimerId: null }
+];
+
+// Losowanie nowych misji do pustych slotów z zachowaniem unikalności na tablicy
+function fillMissionSlots() {
+    missionSlots.forEach(slot => {
+        if (slot.status === "empty" && slot.cooldownLeft <= 0) {
+            const currentlyUsedIds = missionSlots.filter(s => s.mission).map(s => s.mission.id);
+            const availableMissions = MISSION_POOL.filter(m => !currentlyUsedIds.includes(m.id));
+            
+            if (availableMissions.length > 0) {
+                const randomMission = availableMissions[Math.floor(Math.random() * availableMissions.length)];
+                slot.status = "available";
+                slot.mission = { ...randomMission };
+                slot.setupUnits = {};
+                slot.activeUnits = {};
+            }
+        }
+    });
+}
+
+function getFreeUnits(unitKey) {
+    let busyUnits = 0;
+    missionSlots.forEach(slot => {
+        if (slot.status === "active" && slot.activeUnits[unitKey]) busyUnits += slot.activeUnits[unitKey];
+        if (slot.status === "available" && slot.setupUnits[unitKey]) busyUnits += slot.setupUnits[unitKey];
+    });
+    return upgrades[unitKey].level - busyUnits;
+}
+
+function calculateMissionReward(mission, unitsAllocation) {
+    let totalPower = 0;
+    Object.keys(unitsAllocation).forEach(key => {
+        let count = unitsAllocation[key] || 0;
+        if (count <= 0) return;
+
+        let shopKey = key === 'miner' ? 'miner_gear' : 
+                      key === 'quarry' ? 'quarry_gear' : 
+                      key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
+        if (key === 'mine_inspector') shopKey = 'inspector_gear';
+        if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
+        if (key === 'runic_golem') shopKey = 'golem_gear';
+
+        let shopMultiplier = 1;
+        if (shopUpgrades[shopKey]) {
+            shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+        }
+        totalPower += count * upgrades[key].efficiency * shopMultiplier;
+    });
+    return Math.floor(totalPower * mission.baseDuration * mission.gemMultiplier);
+}
+
+function changeMissionUnits(slotIndex, unitKey, amount) {
+    const slot = missionSlots[slotIndex];
+    if (!slot || slot.status !== "available") return;
+
+    if (!slot.setupUnits[unitKey]) slot.setupUnits[unitKey] = 0;
+
+    if (amount > 0 && amount <= getFreeUnits(unitKey)) {
+        slot.setupUnits[unitKey] += amount;
+    } else if (amount < 0 && slot.setupUnits[unitKey] >= Math.abs(amount)) {
+        slot.setupUnits[unitKey] += amount;
+    }
+    renderMissions();
+}
+
+function setMissionUnits(slotIndex, unitKey, value) {
+    const slot = missionSlots[slotIndex];
+    if (!slot || slot.status !== "available") return;
+    
+    let parsedValue = parseInt(value) || 0;
+    if (parsedValue < 0) parsedValue = 0;
+    
+    let currentSetup = slot.setupUnits[unitKey] || 0;
+    slot.setupUnits[unitKey] = 0; 
+    let maxAvailable = currentSetup + getFreeUnits(unitKey);
+    
+    if (parsedValue > maxAvailable) parsedValue = maxAvailable;
+    
+    slot.setupUnits[unitKey] = parsedValue;
+    renderMissions();
+}
+
+// Sprawdzanie czy sztywno zdefiniowane bariery jednostek dla typu misji są spełnione
+function checkMissionRequirements(slot) {
+    if (!slot.mission || !slot.mission.requiredUnits) return true;
+    let allMet = true;
+    Object.keys(slot.mission.requiredUnits).forEach(unitKey => {
+        const requiredCount = slot.mission.requiredUnits[unitKey];
+        const assignedCount = slot.setupUnits[unitKey] || 0;
+        if (assignedCount < requiredCount) {
+            allMet = false;
+        }
+    });
+    return allMet;
+}
+
+function startMission(slotIndex) {
+    const slot = missionSlots[slotIndex];
+    if (!slot || slot.status !== "available") return;
+
+    // Blokada uruchomienia jeśli gracz nie przydzielił wymaganych jednostek specjalnych
+    if (!checkMissionRequirements(slot)) {
+        console.log("Nie można rozpocząć! Brak wymaganych specjalistów na misji.");
+        return;
+    }
+
+    let totalAssigned = Object.values(slot.setupUnits).reduce((a, b) => a + b, 0);
+    if (totalAssigned <= 0) return;
+
+    slot.status = "active";
+    slot.activeUnits = { ...slot.setupUnits };
+    slot.timeLeft = slot.mission.baseDuration;
+
+    slot.timerId = setInterval(() => {
+        slot.timeLeft--;
+
+        if (slot.timeLeft <= 0) {
+            clearInterval(slot.timerId);
+            
+            let finalReward = calculateMissionReward(slot.mission, slot.activeUnits);
+            gems += finalReward;
+            
+            // Uruchomienie czasu oczekiwania na nową misję (Slot staje się pusty)
+            slot.status = "empty";
+            slot.mission = null;
+            slot.activeUnits = {};
+            slot.setupUnits = {};
+            slot.cooldownLeft = 20; // Czas w sekundach, przez jaki slot będzie pusty
+            
+            console.log(`Misja ukończona! Zdobyto: ${finalReward} 💎`);
+            updateGems();
+            startCooldown(slotIndex);
+        }
+        renderMissions();
+    }, 1000);
+
+    renderMissions();
+}
+
+function startCooldown(slotIndex) {
+    const slot = missionSlots[slotIndex];
+    slot.cooldownTimerId = setInterval(() => {
+        slot.cooldownLeft--;
+        if (slot.cooldownLeft <= 0) {
+            clearInterval(slot.cooldownTimerId);
+            fillMissionSlots();
+        }
+        renderMissions();
+    }, 1000);
+}
+
+function renderMissions() {
+    const container = document.getElementById('missions-container');
+    if (!container) return;
+
+    const upgradeNames = {
+        miner: "Miner", quarry: "Quarry", catapult: "Catapult", iron_hammers: "Iron Hammer Order",
+        mine_inspector: "Mine Inspector", runic_golem: "Runic Golem", alchemic: "Alchemic",
+        earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower"
+    };
+
+    // Zawsze renderujemy dokładnie 3 sloty z puli
+    container.innerHTML = missionSlots.map((slot, idx) => {
+        
+        // Stan 1: Slot pusty (Oczekiwanie na nową misję / Cooldown)
+        if (slot.status === "empty") {
+            return `
+                <div class="mission-card cooldown-slot">
+                    <div class="cooldown-hourglass">⏳</div>
+                    <h3>Poszukiwanie kontraktów...</h3>
+                    <p>Nowe zlecenia pojawią się za: <strong>${slot.cooldownLeft}s</strong></p>
+                </div>
+            `;
+        }
+
+        let expectedReward = calculateMissionReward(slot.mission, slot.status === "active" ? slot.activeUnits : slot.setupUnits);
+
+        // Stan 2: Misja aktywna (Wykonywana)
+        if (slot.status === "active") {
+            let deployedList = Object.keys(slot.activeUnits)
+                .filter(k => slot.activeUnits[k] > 0)
+                .map(k => `${upgradeNames[k]}: ${slot.activeUnits[k]}`)
+                .join(', ');
+
+            return `
+                <div class="mission-card active-mission">
+                    <div class="mission-timer-ring">${slot.timeLeft}s</div>
+                    <div class="mission-info">
+                        <h3>${slot.mission.title}</h3>
+                        <p class="mission-status-text"><strong>Status:</strong> Ekspedycja w toku</p>
+                        <p class="mission-status-text" style="font-size:0.85rem; color:#94a3b8;">(${deployedList})</p>
+                        <div class="mission-live-reward">Łup: +${formatNumber(expectedReward)} 💎</div>
+                    </div>
+                </div>
+            `;
+        } 
+        
+        // Stan 3: Misja dostępna do konfiguracji i startu
+        else {
+            let unlockedUnits = Object.keys(upgrades).filter(k => upgrades[k].level > 0);
+            
+            // Renderowanie wizualnego wyznacznika wymagań (Wymagane Jednostki Specjalne)
+            let requirementsHTML = "";
+            let reqsMet = checkMissionRequirements(slot);
+            
+            if (slot.mission.requiredUnits) {
+                requirementsHTML = `<div class="mission-requirements-title">Wymagany skład obowiązkowy:</div><div class="mission-req-box">`;
+                Object.keys(slot.mission.requiredUnits).forEach(reqKey => {
+                    let requiredNum = slot.mission.requiredUnits[reqKey];
+                    let currentAssigned = slot.setupUnits[reqKey] || 0;
+                    let isMet = currentAssigned >= requiredNum;
+                    requirementsHTML += `
+                        <span class="mission-req-item ${isMet ? 'met' : 'unmet'}">
+                            ${isMet ? '✅' : '❌'} ${upgradeNames[reqKey]}: ${currentAssigned}/${requiredNum}
+                        </span>
+                    `;
+                });
+                requirementsHTML += `</div>`;
+            }
+
+            let totalMineIncome = Object.keys(upgrades).reduce((sum, key) => {
+                let shopKey = key === 'miner' ? 'miner_gear' : key === 'quarry' ? 'quarry_gear' : key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
+                if (key === 'mine_inspector') shopKey = 'inspector_gear';
+                if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
+                if (key === 'runic_golem') shopKey = 'golem_gear';
+
+                let shopMultiplier = 1;
+                if (shopUpgrades[shopKey]) shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+                return sum + (upgrades[key].level * upgrades[key].efficiency * shopMultiplier);
+            }, 0);
+
+            let unitSelectorsHTML = unlockedUnits.map(k => {
+                let currentSetup = slot.setupUnits[k] || 0;
+                let free = getFreeUnits(k);
+                
+                let shopKey = k === 'miner' ? 'miner_gear' : k === 'quarry' ? 'quarry_gear' : k === 'catapult' ? 'catapult_gear' : `${k}_gear`;
+                if (k === 'mine_inspector') shopKey = 'inspector_gear';
+                if (k === 'iron_hammers') shopKey = 'iron_hammers_gear';
+                if (k === 'runic_golem') shopKey = 'golem_gear';
+
+                let shopMultiplier = 1;
+                if (shopUpgrades[shopKey]) shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+
+                let singleUnitIncome = upgrades[k].efficiency * shopMultiplier;
+                let totalUpgradeIncome = upgrades[k].level * singleUnitIncome;
+                let sharePercent = totalMineIncome > 0 ? ((totalUpgradeIncome / totalMineIncome) * 100).toFixed(1) : 0;
+
+                return `
+                    <div class="mission-control-box">
+                        <div class="control-info-wrapper">
+                            <span class="control-label">${upgradeNames[k]} (Dostępni: ${free}):</span>
+                            <div class="unit-analytics">
+                                <span>1x: +${formatNumber(singleUnitIncome)}/s</span>
+                                <span class="separator">|</span>
+                                <span>Udział: ${sharePercent}%</span>
+                            </div>
+                        </div>
+                        <div class="counter-actions">
+                            <button onclick="changeMissionUnits(${idx}, '${k}', -1); event.stopPropagation();" class="btn-ctrl">-</button>
+                            <input type="number" 
+                                   value="${currentSetup}" 
+                                   min="0" 
+                                   max="${currentSetup + free}" 
+                                   onclick="event.stopPropagation();"
+                                   onchange="setMissionUnits(${idx}, '${k}', this.value)"
+                                   onkeyup="if(event.key === 'Enter') this.blur();"
+                                   class="unit-counter-input" />
+                            <button onclick="changeMissionUnits(${idx}, '${k}', 1); event.stopPropagation();" class="btn-ctrl" ${free <= 0 ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="mission-card">
+                    <h3>${slot.mission.title}</h3>
+                    <p class="mission-desc">${slot.mission.desc}</p>
+                    
+                    ${requirementsHTML}
+                    
+                    <div class="mission-meta">
+                        <span>Czas: ${slot.mission.baseDuration}s</span>
+                        <span>Przewidywany Łup: +${formatNumber(expectedReward)} 💎</span>
+                    </div>
+                    <div class="mission-selectors-container">
+                        ${unitSelectorsHTML}
+                    </div>
+                    <button onclick="startMission(${idx})" class="btn-launch" ${(expectedReward <= 0 || !reqsMet) ? 'disabled' : ''}>Wyślij Ekspedycję</button>
+                </div>
+            `;
+        }
+    }).join('');
+}
+
+// Inicjalne napełnienie tablicy misji przy startu gry
+fillMissionSlots();
+
+// Generator cząsteczek magii
+function createAltarParticle() {
+    if (!altarCore) return;
+    const p = document.createElement('div');
+    p.style.position = 'fixed';
+    p.style.pointerEvents = 'none';
+    p.style.zIndex = '99999';
+    
+    const rect = altarCore.getBoundingClientRect();
+    const startX = rect.left + rect.width/2;
+    const startY = rect.top + rect.height/2;
+    
+    p.style.left = startX + 'px';
+    p.style.top = startY + 'px';
+    p.innerText = Math.random() > 0.5 ? '✨' : '🔮';
+    p.style.fontSize = (Math.random() * 20 + 10) + 'px';
+    p.style.transition = 'all 0.8s cubic-bezier(0.1, 0.8, 0.3, 1)';
+    
+    document.body.appendChild(p);
+    
+    setTimeout(() => {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 160 + 60;
+        p.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`;
+        p.style.opacity = '0';
+    }, 10);
+    
+    setTimeout(() => p.remove(), 800);
+}
+
+// Generator Okna Gratulacji
+function spawnCongratsModal(amount) {
+    const overlay = document.createElement('div');
+    overlay.className = 'congrats-overlay';
+    
+    overlay.innerHTML = `
+        <div class="congrats-banner">
+            <h2 class="congrats-title">CONGRATS!</h2>
+            <p class="congrats-subtitle">You have successfully manufactured <strong>${formatWithSuffix(amount)}</strong> Magical Crystal${amount > 1 ? 's' : ''}! 🔮</p>
+            <button class="btn-altar" id="btn-congrats-close">Claim Power</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    document.getElementById('btn-congrats-close').onclick = () => {
+        overlay.remove();
+    };
+}
+
+// Handlery Kliknięć z przekazaniem precyzyjnych kosztów
+if (btnTransmute1) {
+    btnTransmute1.onclick = (e) => {
+        e.stopPropagation();
+        const cost = getNextCrystalCost();
+        if (gems >= cost) performRitual(1, cost);
+    };
+}
+
+if (btnTransmuteAll) {
+    btnTransmuteAll.onclick = (e) => {
+        e.stopPropagation();
+        const maxAffordable = getMaxCrystalsAffordable();
+        if (maxAffordable.amount > 0) performRitual(maxAffordable.amount, maxAffordable.cost);
+    };
+}
+
 function updateShopUI() {
         Object.keys(shopUpgrades).forEach(key => {
                 const item = shopUpgrades[key];
@@ -542,9 +1121,8 @@ let missionsState = [
 function getFreeUnits(unitKey) {
     let busyUnits = 0;
     missionsState.forEach(m => {
-        if (m.active && m.activeUnits[unitKey]) {
-            busyUnits += m.activeUnits[unitKey];
-        }
+        if (m.active && m.activeUnits[unitKey]) busyUnits += m.activeUnits[unitKey];
+        if (!m.active && m.setupUnits[unitKey]) busyUnits += m.setupUnits[unitKey];
     });
     return upgrades[unitKey].level - busyUnits;
 }
@@ -586,11 +1164,11 @@ function changeMissionUnits(missionId, unitKey, amount) {
 
     if (!mission.setupUnits[unitKey]) mission.setupUnits[unitKey] = 0;
 
-    let freeUnits = getFreeUnits(unitKey);
-    let hypotheticalSetup = mission.setupUnits[unitKey] + amount;
-
-    if (hypotheticalSetup >= 0 && amount <= freeUnits) {
-        mission.setupUnits[unitKey] = hypotheticalSetup;
+    if (amount > 0 && amount <= getFreeUnits(unitKey)) {
+        mission.setupUnits[unitKey] += amount;
+        renderMissions();
+    } else if (amount < 0 && mission.setupUnits[unitKey] >= Math.abs(amount)) {
+        mission.setupUnits[unitKey] += amount;
         renderMissions();
     }
 }
@@ -629,6 +1207,29 @@ function startMission(missionId) {
     renderMissions();
 }
 
+function toggleMissionExpand(missionId) {
+    const mission = missionsState.find(m => m.id === missionId);
+    if (mission) {
+        mission.expanded = !mission.expanded;
+        renderMissions();
+    }
+}
+function setMissionUnits(missionId, unitKey, value) {
+    const mission = missionsState.find(m => m.id === missionId);
+    if (!mission || mission.active) return;
+    
+    let parsedValue = parseInt(value) || 0;
+    if (parsedValue < 0) parsedValue = 0;
+    
+    let currentSetup = mission.setupUnits[unitKey] || 0;
+    mission.setupUnits[unitKey] = 0; // Reset na czas kalkulacji puli
+    let maxAvailable = currentSetup + getFreeUnits(unitKey);
+    
+    if (parsedValue > maxAvailable) parsedValue = maxAvailable;
+    
+    mission.setupUnits[unitKey] = parsedValue;
+    renderMissions();
+}
 function renderMissions() {
     const container = document.getElementById('missions-container');
     if (!container) return;
@@ -660,73 +1261,160 @@ function renderMissions() {
                 </div>
             `;
         } else {
-            // Cupertino UX Pattern: Show selectors ONLY for unit types that player actually unlocked/owns (lvl > 0)
+            // 1. Obliczamy łączny dochód CAŁEJ kopalni z uwzględnieniem poprawnego klucza golema
+            let totalMineIncome = Object.keys(upgrades).reduce((sum, key) => {
+                let shopKey = key === 'miner' ? 'miner_gear' : 
+                              key === 'quarry' ? 'quarry_gear' : 
+                              key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
+                if (key === 'mine_inspector') shopKey = 'inspector_gear';
+                if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
+                if (key === 'runic_golem') shopKey = 'golem_gear'; // FIX: Poprawny klucz ulepszenia golema
+
+                let shopMultiplier = 1;
+                if (shopUpgrades[shopKey]) {
+                    shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+                }
+                return sum + (upgrades[key].level * upgrades[key].efficiency * shopMultiplier);
+            }, 0);
+
             let unlockedUnits = Object.keys(upgrades).filter(k => upgrades[k].level > 0);
             
             let unitSelectorsHTML = unlockedUnits.map(k => {
                 let currentSetup = m.setupUnits[k] || 0;
                 let free = getFreeUnits(k);
+                
+                let shopKey = k === 'miner' ? 'miner_gear' : 
+                              k === 'quarry' ? 'quarry_gear' : 
+                              k === 'catapult' ? 'catapult_gear' : `${k}_gear`;
+                if (k === 'mine_inspector') shopKey = 'inspector_gear';
+                if (k === 'iron_hammers') shopKey = 'iron_hammers_gear';
+                if (k === 'runic_golem') shopKey = 'golem_gear'; // FIX: Poprawny klucz ulepszenia golema
+
+                let shopMultiplier = 1;
+                if (shopUpgrades[shopKey]) {
+                    shopMultiplier = Math.pow(shopUpgrades[shopKey].multiplier, shopUpgrades[shopKey].level);
+                }
+
+                // 2. Właściwa kalkulacja oparta o efficiency i ulepszenia
+                let singleUnitIncome = upgrades[k].efficiency * shopMultiplier;
+                let totalUpgradeIncome = upgrades[k].level * singleUnitIncome;
+                let sharePercent = totalMineIncome > 0 ? ((totalUpgradeIncome / totalMineIncome) * 100).toFixed(1) : 0;
+
                 return `
-                    <div class="mission-control-box" style="margin-bottom: 8px;">
-                        <span class="control-label" style="font-size:0.85rem;">${upgradeNames[k]} (Avail: ${free}):</span>
+                    <div class="mission-control-box">
+                        <div class="control-info-wrapper">
+                            <span class="control-label">${upgradeNames[k]} (Avail: ${free}):</span>
+                            <div class="unit-analytics">
+                                <span>1x: +${formatNumber(singleUnitIncome)}/s</span>
+                                <span class="separator">|</span>
+                                <span>Total: +${formatNumber(totalUpgradeIncome)}/s</span>
+                                <span class="separator">|</span>
+                                <span class="analytics-percent">${sharePercent}% kopalni</span>
+                            </div>
+                        </div>
                         <div class="counter-actions">
-                            <button onclick="changeMissionUnits(${m.id}, '${k}', -1)" class="btn-ctrl">-</button>
-                            <span class="unit-counter-value">${currentSetup}</span>
-                            <button onclick="changeMissionUnits(${m.id}, '${k}', 1)" class="btn-ctrl" ${free <= 0 ? 'disabled' : ''}>+</button>
+                            <button onclick="changeMissionUnits(${m.id}, '${k}', -1); event.stopPropagation();" class="btn-ctrl">-</button>
+                            <input type="number" 
+                                   value="${currentSetup}" 
+                                   min="0" 
+                                   max="${currentSetup + free}" 
+                                   onclick="event.stopPropagation();"
+                                   onchange="setMissionUnits(${m.id}, '${k}', this.value)"
+                                   onkeyup="if(event.key === 'Enter') this.blur();"
+                                   class="unit-counter-input" />
+                            <button onclick="changeMissionUnits(${m.id}, '${k}', 1); event.stopPropagation();" class="btn-ctrl" ${free <= 0 ? 'disabled' : ''}>+</button>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            let hasUnitsSelected = Object.values(m.setupUnits).reduce((a, b) => a + b, 0) > 0;
-
+            // FIX: Dodany brakujący return dla wygenerowanej karty nieaktywnej misji
             return `
                 <div class="mission-card">
                     <h3>${m.title}</h3>
                     <p class="mission-desc">${m.desc}</p>
-                    <div class="mission-unit-selectors" style="margin-bottom: 15px;">
-                        ${unitSelectorsHTML || '<p style="font-size:0.85rem;color:#f87171;text-align:center;">Hire structures in the Mine first!</p>'}
-                    </div>
                     <div class="mission-meta">
-                        <span>⏱️ Duration: ${m.baseDuration}s</span>
-                        <span>💎 Reward: +${formatNumber(expectedReward)}</span>
+                        <span>Duration: ${m.baseDuration}s</span>
+                        <span>Loot: +${formatNumber(expectedReward)} 💎</span>
                     </div>
-                    <button onclick="startMission(${m.id})" class="btn-launch" ${!hasUnitsSelected ? 'disabled' : ''}>
-                        Launch Expedition
-                    </button>
+                    <div class="mission-selectors-container">
+                        ${unitSelectorsHTML}
+                    </div>
+                    <button onclick="startMission(${m.id})" class="btn-launch" ${expectedReward <= 0 ? 'disabled' : ''}>Launch Mission</button>
                 </div>
             `;
         }
-    }).join('');
+    }).join(''); // FIX: Poprawne domknięcie mapowania tablicy misji
 }
+        
 const sidebarButtons = document.querySelectorAll('.sidebar-btn');
 const tabContents = document.querySelectorAll('.tab-content');
 
-sidebarButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Zapobiega triggerowaniu autoplay muzyki z window click
-        
-        // Czyszczenie stanu aktywnego z buttonów
-        sidebarButtons.forEach(b => b.classList.remove('active'));
-        
-        // Ukrycie wszystkich widoków zakładek
-        tabContents.forEach(tab => tab.classList.add('hidden'));
-        
-        // Aktywacja wybranego elementu
-        btn.classList.add('active');
-        const targetTabId = btn.getAttribute('data-tab');
-        const targetTab = document.getElementById(targetTabId);
-        
-        if (targetTab) {
-            targetTab.classList.remove('hidden');
-        }
+function handleSidebarNavigation() {
+    const sidebarButtons = document.querySelectorAll('.sidebar-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Funkcja dynamicznie sprawdzająca progi i aplikująca znaki zapytania oraz klasy CSS
+    function updateSidebarLocks() {
+        sidebarButtons.forEach(btn => {
+            const targetTabId = btn.getAttribute('data-tab');
+            const labelSpan = btn.querySelector('span');
+            
+            if (targetTabId === 'tavern-tab' || targetTabId === 'altar-tab') {
+                if (gems < 1000000) {
+                    if (labelSpan) labelSpan.innerText = "???";
+                    btn.classList.add('locked-sidebar-btn');
+                } else {
+                    if (labelSpan) {
+                        labelSpan.innerText = targetTabId === 'tavern-tab' ? "Tavern" : "Altar";
+                    }
+                    btn.classList.remove('locked-sidebar-btn');
+                }
+            }
+        });
+    }
+
+    sidebarButtons.forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const targetTabId = btn.getAttribute('data-tab');
+
+            // Blokada mechaniczna kliknięcia poniżej 1 000 000 klejnotów
+            if ((targetTabId === 'tavern-tab' || targetTabId === 'altar-tab') && gems < 1000000) {
+                console.log("Ta sekcja jest jeszcze zablokowana! Potrzebujesz 1.00M Gems.");
+                return;
+            }
+
+            sidebarButtons.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(tab => tab.classList.add('hidden'));
+
+            btn.classList.add('active');
+            const targetTab = document.getElementById(targetTabId);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+                if (targetTabId === 'tavern-tab') {
+                    renderMissions();
+                }
+            }
+        };
     });
-});
+
+    // Podpinamy aktualizację wizualną blokad pod pętlę gry
+    const originalAltarLoop = gameLoop;
+    gameLoop = function(timestamp) {
+        originalAltarLoop(timestamp);
+        updateSidebarLocks();
+    };
+}
+
+// Wywołanie nawigacji
+handleSidebarNavigation();
 
 
 function saveGameToFile() {
         const dataToSave = {
                 gems: gems,
+                magicalCrystals: magicalCrystals, // NOWA WALUTA
                 currentTrackIndex: currentTrackIndex,
                 isTutorialPassed: isTutorialPassed,
                 upgrades: {},
@@ -772,6 +1460,9 @@ function loadGameFromFile(event) {
                         if (typeof loadedData.gems === "number") {
                                 gems = loadedData.gems;
                         }
+                        if (typeof loadedData.magicalCrystals === "number") {
+                                magicalCrystals = loadedData.magicalCrystals; // WCZYTYWANIE NOWEJ WALUTY
+                        }
                         if (typeof loadedData.isTutorialPassed === "boolean") {
                                 isTutorialPassed = loadedData.isTutorialPassed;
                                 if (isTutorialPassed && tutorialOverlay) {
@@ -788,7 +1479,6 @@ function loadGameFromFile(event) {
                                 }
                         }
 
-                        // Zaktualizowany słownik pod nowe ulepszenia
                         const defaultEfficiencies = {
                                 miner: 0.1, quarry: 1, catapult: 8, iron_hammers: 47,
                                 mine_inspector: 260, runic_golem: 1400, alchemic: 7800,
@@ -822,6 +1512,8 @@ function loadGameFromFile(event) {
                         updateGems();
                         updateUpgradesUI();
                         updateShopUI();
+                        if (typeof updateAltarUI === 'function') updateAltarUI();
+                        renderMissions();
 
                 } catch (err) {
                         console.error("Magic failed! Save file is corrupted.", err);
@@ -947,6 +1639,7 @@ if (tutorialOverlay && tutorialText) {
 function silentSave() {
         const dataToSave = {
                 gems: gems,
+                magicalCrystals: magicalCrystals, // AUTOSAVE NOWEJ WALUTY
                 currentTrackIndex: currentTrackIndex,
                 isTutorialPassed: isTutorialPassed,
                 upgrades: {},
@@ -980,6 +1673,10 @@ function silentLoad() {
                 try {
                         const parsed = JSON.parse(savedData);
                         gems = parsed.gems;
+                        
+                        if (typeof parsed.magicalCrystals === "number") {
+                            magicalCrystals = parsed.magicalCrystals; // AUTOLOAD NOWEJ WALUTY
+                        }
 
                         const defaultEfficiencies = {
                                 miner: 0.1, quarry: 1, catapult: 8, iron_hammers: 47,
@@ -1009,7 +1706,6 @@ function silentLoad() {
                                 }
                         });
 
-                        // Poprawione kaskadowe sprawdzanie poziomów przy wczytywaniu zapisu
                         if (upgrades.miner.level < 5) {
                                 upgrades.quarry.level = 0; upgrades.quarry.cost = upgrades.quarry.baseCost;
                                 upgrades.catapult.level = 0; upgrades.catapult.cost = upgrades.catapult.baseCost;
@@ -1025,6 +1721,8 @@ function silentLoad() {
                         if (typeof updateGems === 'function') updateGems();
                         if (typeof updateUpgradesUI === 'function') updateUpgradesUI();
                         if (typeof updateShopUI === 'function') updateShopUI();
+                        if (typeof updateAltarUI === 'function') updateAltarUI();
+                        renderMissions();
 
                         console.log("Backup Loaded Successfully.");
                 } catch (e) {
@@ -1034,3 +1732,5 @@ function silentLoad() {
 }
 
 silentLoad();
+
+renderMissions();
