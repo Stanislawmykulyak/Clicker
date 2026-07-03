@@ -163,9 +163,17 @@
             </div>
         </div>
     </div>
-
+    
     <!-- ZAKŁADKA SKLEPU Z KRYSZTAŁAMI -->
     <div id="crystal-shop-tab" class="tab-content hidden">
+        <div id="upgrade-tooltip" style="display: none; position: fixed; z-index: 99999; pointer-events: none;">
+            <div class="tooltip-title" id="tooltip-title"></div>
+            <div class="tooltip-description" id="tooltip-description"></div>
+            <div class="tooltip-cost" id="tooltip-cost">Koszt: <span id="tooltip-cost-value"></span> 💎</div>
+        </div>
+        <div id="crystal-shop-count" style="font-family: 'Cinzel', serif; font-size: 1.8rem; color: #a855f7; text-align: center; margin-bottom: 20px; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);">
+            Crystals: 0 🔮
+        </div>
         <div class="crystal-shop-wrapper">
             <div class="crystal-shop-section">
                 <h3 class="shop-title">🔮 Crystal Empowerments 🔮</h3>

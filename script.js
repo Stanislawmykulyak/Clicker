@@ -42,7 +42,7 @@ function tryAutoplay() {
         bgMusic.play().then(() => {
                 window.removeEventListener('click', tryAutoplay);
         }).catch(() => {
-                console.log("browser is blocking autoplay, you need to click");
+                
         });
 }
 
@@ -86,7 +86,7 @@ let gems = 0;
 let isTavernUnlocked = false;
 let isAltarUnlocked = false;
 
-let crystal_gems_bought = 0;
+let crystals_bought = 0;
 
 function updateGems() {
         if (gemCounter) gemCounter.innerHTML = `Gems : ${formatNumber(gems)}💎`;
@@ -152,21 +152,42 @@ function handleRockClick() {
 }
 
 function renderAllPerks() {
+        const crystalShopCounter = document.getElementById('crystal-shop-count');
+        if (crystalShopCounter) crystalShopCounter.innerText = `Crystals: ${formatWithSuffix(magicalCrystals)} 🔮`;
+
+        const crystalTooltip = document.getElementById('upgrade-tooltip');
+
+        const upgradeIcons = {
+                miner: "media/miner-upgrade.png",
+                quarry: "media/quarry-upgrade.png",
+                catapult: "media/catapult-upgrade.jpg",
+                iron_hammer: "media/iron-hammers.png",
+                mine_inspector: "media/mine-inspector.png",
+                runic_golem: "media/runic-golem.png",
+                alchemic: "media/alchemic-upgrade.jpg",
+                earth_mage: "media/earth-mage.png",
+                deep_shaft: "media/deep-shaft.png",
+                gem_tower: "media/gem-tower.png"
+        };
+
         for (let unit in crystalPerks) {
                 let container = document.getElementById(`perks-${unit}`);
                 if (!container) continue;
 
-                container.innerHTML = ""; // Czyszczenie starych przycisków
+                container.innerHTML = ""; // Czyszczenie starego kontenera
 
                 crystalPerks[unit].forEach((perk, index) => {
+                        // Tworzenie kwadratowego przycisku perku
                         let btn = document.createElement("button");
-                        btn.className = `perk-button ${perk.unlocked ? 'unlocked' : ''}`;
+                        btn.className = `crystal-perk-card ${perk.unlocked ? 'unlocked' : ''}`;
 
-                        // Wyświetlamy ptaszek jeśli kupione, lub cyfrę rzymską I, II, III
-                        const romanNumerals = ["I", "II", "III"];
-                        btn.innerText = perk.unlocked ? "✓" : (romanNumerals[index] || (index + 1));
+                        // Wstrzykiwanie obrazka (tymczasowo ikona struktury) oraz wskaźnika poziomu/odblokowania
+                        btn.innerHTML = `
+                                <img src="${upgradeIcons[unit] || 'media/miner-upgrade.png'}" class="perk-card-img" alt="${perk.name}">
+                                <div class="perk-card-status">${perk.unlocked ? "✓" : (index + 1)}</div>
+                        `;
 
-                        // Akcja po kliknięciu
+                        // Akcja po kliknięciu (zakup perku)
                         if (!perk.unlocked) {
                                 btn.onclick = (e) => {
                                         e.stopPropagation();
@@ -174,32 +195,38 @@ function renderAllPerks() {
                                 };
                         }
 
-                        // Integracja z RPG Tooltipem na najechanie myszką
+                        // Obsługa zaawansowanego tooltipu Crystal Shop
                         btn.addEventListener('mouseenter', () => {
-                                if (storeTooltip) {
-                                        storeTooltip.innerHTML = `
-                        <div class="tooltip-title" style="color: #c084fc;">${perk.name}</div>
-                        <div class="tooltip-desc">${perk.desc}</div>
-                        <div class="tooltip-cost" style="color: #a855f7;">
-                            ${perk.unlocked ? "✨ ALREADY UNLOCKED" : "Price: " + perk.cost + " 🔮"}
+                                if (crystalTooltip) {
+                                        crystalTooltip.innerHTML = `
+                        <div class="tooltip-header">🔮 ${perk.name}</div>
+                        <div class="tooltip-body">${perk.desc}</div>
+                        <div class="tooltip-footer">
+                                <span style="color: #94a3b8;">Status:</span>
+                                ${perk.unlocked
+                                                        ? '<span class="tooltip-status-unlocked">✨ ODBLOKOWANO</span>'
+                                                        : `<span class="tooltip-status-locked">Koszt: ${perk.cost} 🔮</span>`
+                                                }
                         </div>
-                    `;
-                                        storeTooltip.style.display = 'block';
+                `;
+                                        crystalTooltip.style.display = 'block';
                                 }
                         });
 
+                        // ZNAJDŹ I ZAMIEŃ BLOK 'mousemove':
                         btn.addEventListener('mousemove', (e) => {
-                                if (!storeTooltip) return;
+                                if (!crystalTooltip) return;
                                 let left = e.clientX + 15;
                                 let top = e.clientY + 15;
-                                if (left + storeTooltip.offsetWidth > window.innerWidth) left = e.clientX - storeTooltip.offsetWidth - 15;
-                                if (top + storeTooltip.offsetHeight > window.innerHeight) top = e.clientY - storeTooltip.offsetHeight - 15;
-                                storeTooltip.style.left = left + 'px';
-                                storeTooltip.style.top = top + 'px';
+                                if (left + crystalTooltip.offsetWidth > window.innerWidth) left = e.clientX - crystalTooltip.offsetWidth - 15;
+                                if (top + crystalTooltip.offsetHeight > window.innerHeight) top = e.clientY - crystalTooltip.offsetHeight - 15;
+                                crystalTooltip.style.left = left + 'px';
+                                crystalTooltip.style.top = top + 'px';
                         });
 
+                        // ZNAJDŹ I ZAMIEŃ BLOK 'mouseleave':
                         btn.addEventListener('mouseleave', () => {
-                                if (storeTooltip) storeTooltip.style.display = 'none';
+                                if (crystalTooltip) crystalTooltip.style.display = 'none';
                         });
 
                         container.appendChild(btn);
@@ -220,14 +247,18 @@ function buyCrystalPerk(unit, index) {
                 renderAllPerks();
 
                 // Aktualizacja tooltipu po zakupie, żeby natychmiast pokazał stan "ODBLOKOWANO"
-                if (storeTooltip) {
-                        storeTooltip.innerHTML = `
-                <div class="tooltip-title" style="color: #c084fc;">${perk.name}</div>
-                <div class="tooltip-desc">${perk.desc}</div>
-                <div class="tooltip-cost" style="color: #a855f7;">✨ ALREADY UNLOCKED</div>
-            `;
+                const crystalTooltip = document.getElementById('upgrade-tooltip');
+                if (crystalTooltip) {
+                        crystalTooltip.innerHTML = `
+                <div class="tooltip-header">🔮 ${perk.name}</div>
+                <div class="tooltip-body">${perk.desc}</div>
+                <div class="tooltip-footer">
+                        <span style="color: #94a3b8;">Status:</span>
+                        <span class="tooltip-status-unlocked">✨ ODBLOKOWANO</span>
+                </div>
+        `;
                 }
-                console.log(`Odblokowano perk: ${perk.name} dla ${unit}`);
+                
         } else if (perk.unlocked) {
                 alert("Ten talent jest już odblokowany!");
         } else {
@@ -257,7 +288,7 @@ if (accRock) {
                 if ((Math.random() * 100) < currentLuckyChance) {
                         gainedGems = gem_per_click * currentLuckyMultiplier;
                         isLucky = true;
-                        console.log("Lucky gem strike!");
+                        
                 } else {
                         gainedGems = gem_per_click;
                 }
@@ -354,11 +385,11 @@ function resetProgress() {
 }
 
 function updateUpgradesUI() {
-        const upgradeNames = { 
-                miner: "Miner", quarry: "Quarry", catapult: "Catapult", 
-                iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector", 
-                runic_golem: "Runic Golem", alchemic: "Alchemic", 
-                earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower" 
+        const upgradeNames = {
+                miner: "Miner", quarry: "Quarry", catapult: "Catapult",
+                iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector",
+                runic_golem: "Runic Golem", alchemic: "Alchemic",
+                earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower"
         };
 
         // Opisy wyjaśniające, co robi dane ulepszenie
@@ -399,14 +430,14 @@ function updateUpgradesUI() {
                         descEl.style.color = '#94a3b8';
                         descEl.style.marginTop = '4px';
                         descEl.style.textAlign = 'left';
-                        
+
                         const infoWrapper = document.createElement('div');
                         infoWrapper.className = 'upgrade-info-wrapper';
                         infoWrapper.style.display = 'flex';
                         infoWrapper.style.flexDirection = 'column';
                         infoWrapper.style.flexGrow = '1';
                         infoWrapper.style.alignItems = 'flex-start';
-                        
+
                         btnEl.parentNode.insertBefore(infoWrapper, btnEl);
                         infoWrapper.appendChild(btnEl);
                         infoWrapper.appendChild(descEl);
@@ -417,7 +448,7 @@ function updateUpgradesUI() {
                 if (key === 'mine_inspector') shopKey = 'inspector_gear';
                 if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
                 if (key === 'runic_golem') shopKey = 'golem_gear';
-                
+
                 let perkMultiplier = 1;
                 if (key === 'quarry') {
                         if (crystalPerks.quarry[0].unlocked) perkMultiplier *= 1.25;
@@ -426,7 +457,7 @@ function updateUpgradesUI() {
                 if (key === 'catapult' && crystalPerks.catapult[0].unlocked) perkMultiplier *= 1.30;
                 if (key === 'iron_hammers' && crystalPerks.iron_hammer[0].unlocked) perkMultiplier *= 1.25;
                 if (crystalPerks.mine_inspector[0].unlocked && (key === 'miner' || key === 'quarry')) perkMultiplier *= 1.10;
-                
+
                 let shopMultiplier = Math.pow(shopUpgrades[shopKey]?.multiplier || 1, shopUpgrades[shopKey]?.level || 0);
                 let currentSingleEfficiency = up.efficiency * shopMultiplier * perkMultiplier;
 
@@ -474,13 +505,13 @@ function buyUpgrade(upgradeKey) {
         let isUnlocked = true;
         if (upgradeKey === 'quarry' && upgrades.miner.level < 5) isUnlocked = false;
         if (upgradeKey === 'catapult' && upgrades.miner.level < 5) isUnlocked = false;
-        if (upgradeKey === 'iron_hammers' && upgrades.catapult.level < 10) isUnlocked = false;
-        if (upgradeKey === 'mine_inspector' && upgrades.iron_hammers.level < 10) isUnlocked = false;
-        if (upgradeKey === 'runic_golem' && upgrades.mine_inspector.level < 10) isUnlocked = false;
-        if (upgradeKey === 'alchemic' && upgrades.runic_golem.level < 10) isUnlocked = false;
-        if (upgradeKey === 'earth_mage' && upgrades.alchemic.level < 10) isUnlocked = false;
-        if (upgradeKey === 'deep_shaft' && upgrades.earth_mage.level < 10) isUnlocked = false;
-        if (upgradeKey === 'gem_tower' && upgrades.deep_shaft.level < 10) isUnlocked = false;
+        if (upgradeKey === 'iron_hammers' && upgrades.catapult.level < 5) isUnlocked = false;
+        if (upgradeKey === 'mine_inspector' && upgrades.iron_hammers.level < 5) isUnlocked = false;
+        if (upgradeKey === 'runic_golem' && upgrades.mine_inspector.level < 5) isUnlocked = false;
+        if (upgradeKey === 'alchemic' && upgrades.runic_golem.level < 5) isUnlocked = false;
+        if (upgradeKey === 'earth_mage' && upgrades.alchemic.level < 5) isUnlocked = false;
+        if (upgradeKey === 'deep_shaft' && upgrades.earth_mage.level < 5) isUnlocked = false;
+        if (upgradeKey === 'gem_tower' && upgrades.deep_shaft.level < 5) isUnlocked = false;
 
         if (!isUnlocked) return;
 
@@ -586,11 +617,11 @@ function formatWithSuffix(value) {
 }
 
 function getNextCrystalCost() {
-        return Math.floor(baseCrystalCost * Math.pow(costMultiplier, crystal_gems_bought));
+        return Math.floor(baseCrystalCost * Math.pow(costMultiplier, crystals_bought));
 }
 
 function getMaxCrystalsAffordable() {
-        let currentGems = gems; let count = 0; let totalCost = 0; let tempCrystals = crystal_gems_bought;
+        let currentGems = gems; let count = 0; let totalCost = 0; let tempCrystals = crystals_bought;
         while (true) {
                 let nextCost = Math.floor(baseCrystalCost * Math.pow(costMultiplier, tempCrystals));
                 if (currentGems >= nextCost) {
@@ -617,7 +648,7 @@ function updateAltarUI() {
 function performRitual(crystalAmount, totalCost) {
         gems -= totalCost;
         magicalCrystals += crystalAmount;
-        crystal_gems_bought += crystalAmount;
+        crystals_bought += crystalAmount;
         updateGems();
         updateAltarUI();
 
@@ -640,6 +671,66 @@ function performRitual(crystalAmount, totalCost) {
         }, 800);
 }
 
+const upgradeData = {
+        'miner': {
+                name: "Wykwalifikowany Górnik",
+                desc: "Zatrudnia krasnoludzkiego górnika, który automatycznie wydobywa kryształy co sekundę."
+        },
+        'archer': {
+                name: "Wsparcie Łuczników",
+                desc: "Łucznicy ostrzeliwują skałę z dystansu, zwiększając pasywny przychód kryształów."
+        },
+        // Dodaj tutaj kolejne ulepszenia według schematu klasy (np. 'szaman', 'kilof' itp.)
+        'default': {
+                name: "Tajemnicze Ulepszenie",
+                desc: "Zwiększa Twoją potęgę w magicznej kopalni."
+        }
+};
+document.addEventListener("DOMContentLoaded", () => {
+        const tooltip = document.getElementById("upgrade-tooltip");
+        const titleEl = document.getElementById("tooltip-title");
+        const descEl = document.getElementById("tooltip-description");
+        const costEl = document.getElementById("tooltip-cost-value");
+
+        // Nasłuchujemy na kontenerze głównym (upgrades-panel)
+        const panel = document.querySelector('.upgrades-panel');
+
+        if (panel) {
+                panel.addEventListener("mouseover", (e) => {
+                        // Szukamy najbliższego elementu rodzica, który ma w klasie "-upgrades"
+                        const target = e.target.closest('[class*="-upgrades"]');
+
+                        if (target) {
+                                // Wyciągamy typ (np. 'miner' z 'miner-upgrades')
+                                const className = Array.from(target.classList).find(c => c.includes('-upgrades'));
+                                const type = className ? className.replace('-upgrades', '') : 'default';
+
+                                // Pobieramy dane
+                                const data = upgradeData[type] || upgradeData['default'];
+                                const priceText = target.querySelector('[class*="-price"]')?.textContent || "0";
+
+                                // Ustawiamy treść
+                                titleEl.textContent = data.name;
+                                descEl.textContent = data.desc;
+                                costEl.textContent = priceText;
+
+                                // Pokazujemy
+                                tooltip.style.display = "block";
+                        }
+                });
+
+                panel.addEventListener("mousemove", (e) => {
+                        tooltip.style.left = (e.clientX + 15) + "px";
+                        tooltip.style.top = (e.clientY + 15) + "px";
+                });
+
+                panel.addEventListener("mouseout", (e) => {
+                        if (e.target.closest('[class*="-upgrades"]')) {
+                                tooltip.style.display = "none";
+                        }
+                });
+        }
+});
 function createAltarParticle() {
         if (!altarCore) return;
         const p = document.createElement('div');
@@ -984,7 +1075,7 @@ function renderMissions() {
         let htmlContent = `
         <div class="global-pool-info" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; padding: 15px;">
             <span>📜 Tablica Zleceń Królestwa Krasnoludów</span>
-            <button onclick="rerollMissionsBoard()" class="btn-toggle-crew" style="padding: 8px 16px; font-weight: bold; border-color: #ffd700;">
+            <button onclick="rerollMissionsBoard()" id="audio-toggle">
                 🔄 Odśwież Tablicę (Koszt: 50K Gems 💎)
             </button>
         </div>
@@ -1183,12 +1274,163 @@ function handleSidebarNavigation() {
         };
 }
 handleSidebarNavigation();
+// --- BAZA DANYCH PERKÓW (ZDJĘCIE image_f68f8c.png) ---
+const perkTooltipStyles = document.createElement('style');
+perkTooltipStyles.innerHTML = `
+    /* Sprawiamy, że kółka stają się punktem odniesienia dla okienka */
+    .miner-upgrades button, .quarry-upgrades button, .catapult-upgrades button, 
+    .iron_hammers-upgrades button, .mine_inspector-upgrades button,
+    .miner-upgrades div, .quarry-upgrades div, .catapult-upgrades div, 
+    .iron_hammers-upgrades div, .mine_inspector-upgrades div {
+        position: relative;
+    }
 
+    /* Wygląd okienka perków */
+    .perk-tooltip-box {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 135%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 250px;
+        background: #090d16;
+        border: 2px solid #a855f7; /* Fioletowa ramka pasująca do Twojego UI */
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        color: #fff;
+        padding: 12px;
+        border-radius: 10px;
+        z-index: 9999;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+        pointer-events: none;
+        text-align: left;
+        font-family: sans-serif;
+    }
+
+    /* Wyświetlanie po najechaniu */
+    [data-has-perk-tooltip]:hover .perk-tooltip-box {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .perk-tooltip-box h5 {
+        margin: 0 0 4px 0;
+        color: #d8b4fe;
+        font-size: 0.95rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .perk-tooltip-box p {
+        margin: 0 0 8px 0;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        line-height: 1.3;
+    }
+
+    .perk-tooltip-box .perk-cost-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        border-top: 1px solid #3b0764;
+        padding-top: 5px;
+        color: #a5f3fc;
+        font-weight: bold;
+    }
+`;
+document.head.appendChild(perkTooltipStyles);
+
+const crystalPerksData = {
+        miner: [
+                { name: "Górniczy Pośpiech", desc: "Zwiększa bazową produkcję Górników o +10%.", cost: 1, icon: "⛏️" },
+                { name: "Głębokie Wykopaliska", desc: "Każdy kupiony Górnik zwiększa szansę na krytyczne kliknięcie.", cost: 2, icon: "💎" },
+                { name: "Synergia Kamieniołomu", desc: "Zwiększa wydajność Kamieniołomów o +1% za każdy poziom Górnika.", cost: 3, icon: "🔗" }
+        ],
+        quarry: [
+                { name: "Technologia Odkrywkowa", desc: "Zwiększa wydajność Kamieniołomów o +25%.", cost: 2, icon: "🪨" },
+                { name: "Ciężki Sprzęt", desc: "Zmniejsza koszt zakupu kolejnych Kamieniołomów o 10%.", cost: 3, icon: "⚙️" },
+                { name: "Architektura Zniszczenia", desc: "Zmniejsza koszt zakupu Katapult o 10%.", cost: 4, icon: "🏗️" }
+        ],
+        catapult: [
+                { name: "Wzmocnione Cięciwy", desc: "Zwiększa produkcję Katapult o +30%.", cost: 3, icon: "🏹" },
+                { name: "Ogniste Pociski", desc: "Katapulty zyskują szansę na podpalenie złoża i darmowe odłamki.", cost: 4, icon: "🔥" },
+                { name: "Zasięg Oblężniczy", desc: "Każda katapulta zwiększa ogólny globalny mnożnik CPS o +1%.", cost: 5, icon: "🌍" }
+        ],
+        iron_hammer: [
+                { name: "Runiczne Kowadła", desc: "Zwiększa produkcję Zakonu Młotów o +25%.", cost: 4, icon: "🔨" },
+                { name: "Hartowana Stal", desc: "Zwiększa siłę kliknięcia o 5% wartości Twojego całkowitego CPS.", cost: 5, icon: "⚔️" },
+                { name: "Błogosławieństwo Stali", desc: "Zmniejsza koszt wszystkich ulepszeń w zwykłym sklepie o 5%.", cost: 6, icon: "✨" }
+        ],
+        mine_inspector: [
+                { name: "Surowy Nadzór", desc: "Zwiększa wydajność Górników i Kamieniołomów o +10%.", cost: 5, icon: "📋" },
+                { name: "Optymalizacja Biurokracji", desc: "Zwiększa produkcję Inspektorów o +20%.", cost: 6, icon: "⏳" },
+                { name: "Złote Normy", desc: "Zwiększa szansę na znalezienie rzadkich, czystych klejnotów o +15%.", cost: 7, icon: "👑" }
+        ]
+};
+function initPerkTooltips() {
+        // Mapowanie kluczy danych na klasy kontenerów w HTML
+        const containerClasses = {
+                miner: ['miner-upgrades', 'miner_upgrades'],
+                quarry: ['quarry-upgrades', 'quarry_upgrades'],
+                catapult: ['catapult-upgrades', 'catapult_upgrades'],
+                iron_hammer: ['iron_hammers-upgrades', 'iron-hammer-upgrades', 'iron_hammer_upgrades'],
+                mine_inspector: ['mine_inspector-upgrades', 'mine-inspector-upgrades', 'mine_inspector_upgrades']
+        };
+
+        Object.keys(crystalPerksData).forEach(key => {
+                let container = null;
+
+                // Szukamy odpowiedniego kontenera z listy możliwych klas
+                for (const className of containerClasses[key]) {
+                        container = document.querySelector(`.${className}`);
+                        if (container) break;
+                }
+
+                if (!container) return; // Jeśli nie znaleziono karty, przejdź do następnej
+
+                // Znajdź przyciski/elementy reprezentujące kółka I, II, III
+                const elements = Array.from(container.querySelectorAll('button, div, span, .circle'));
+                const perkButtons = elements.filter(el => {
+                        const txt = el.textContent.trim();
+                        return txt === 'I' || txt === 'II' || txt === 'III';
+                });
+
+                // Wstrzykiwanie tooltipów do kółek
+                perkButtons.forEach((btn, index) => {
+                        const perkInfo = crystalPerksData[key][index];
+                        if (!perkInfo) return;
+
+                        // Zabezpieczenie przed wielokrotnym dodawaniem okienka
+                        if (btn.hasAttribute('data-has-perk-tooltip')) return;
+                        btn.setAttribute('data-has-perk-tooltip', 'true');
+
+                        // Tworzymy strukturę wyskakującego okienka
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'perk-tooltip-box';
+                        tooltip.innerHTML = `
+                <h5>${perkInfo.icon} ${perkInfo.name}</h5>
+                <p>${perkInfo.desc}</p>
+                <div class="perk-cost-row">
+                    <span>Wymaga odblokowania</span>
+                    <span>Koszt: ${perkInfo.cost} 🔮</span>
+                </div>
+            `;
+
+                        btn.appendChild(tooltip);
+                });
+        });
+}
+
+// Uruchomienie inicjalizacji tooltipów chwilę po załadowaniu skryptu
+setTimeout(initPerkTooltips, 600);
 // --- ZAPISY I DIALOGI ---
 function saveGameToFile() {
         const dataToSave = {
                 gems: gems,
                 magicalCrystals: magicalCrystals,
+                crystals_bought: crystals_bought,
                 currentTrackIndex: currentTrackIndex,
                 isTutorialPassed: isTutorialPassed,
                 isTavernUnlocked: isTavernUnlocked,
@@ -1214,28 +1456,22 @@ function loadGameFromFile(event) {
         reader.onload = function (e) {
                 try {
                         const loadedData = JSON.parse(e.target.result);
-                        if (typeof loadedData.gems === "number") gems = loadedData.gems;
-                        if (typeof loadedData.magicalCrystals === "number") magicalCrystals = loadedData.magicalCrystals;
-                        if (typeof loadedData.isTavernUnlocked === "boolean") isTavernUnlocked = loadedData.isTavernUnlocked;
-                        if (typeof loadedData.isAltarUnlocked === "boolean") isAltarUnlocked = loadedData.isAltarUnlocked;
-                        if (typeof loadedData.isTutorialPassed === "boolean") {
-                                isTutorialPassed = loadedData.isTutorialPassed;
-                                if (isTutorialPassed && tutorialOverlay) tutorialOverlay.style.display = 'none';
+                        if (!loadedData || typeof loadedData !== 'object') {
+                                alert("Ten zwój zapisu jest pusty lub uszkodzony!");
+                                return;
                         }
-                        // (Wczytywanie pozostałych danych bez zmian)
+
+                        // Zapisujemy wgrany plik bezpośrednio do pamięci autozapisu
+                        localStorage.setItem('medieval_clicker_autosave', JSON.stringify(loadedData));
+
+                        // Przeładowujemy stronę - bezpieczna funkcja silentLoad() zajmie się resztą przy starcie
                         location.reload();
-                } catch (err) { alert("This scroll is tainted!"); }
+                } catch (err) {
+                        alert("Nie można odczytać zwoju! Plik nie jest poprawnym plikiem zapisu JSON.");
+                        console.error(err);
+                }
         };
         reader.readAsText(file);
-        if (parsed.crystalPerksData) {
-                Object.keys(parsed.crystalPerksData).forEach(unit => {
-                        if (crystalPerks[unit]) {
-                                parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
-                                        if (crystalPerks[unit][idx]) crystalPerks[unit][idx].unlocked = unlockedState;
-                                });
-                        }
-                });
-        }
 }
 
 const fileInput = document.getElementById('file-input');
@@ -1314,6 +1550,7 @@ function silentSave() {
         const dataToSave = {
                 gems: gems,
                 magicalCrystals: magicalCrystals,
+                crystals_bought: crystals_bought,
                 currentTrackIndex: currentTrackIndex,
                 isTutorialPassed: isTutorialPassed,
                 isTavernUnlocked: isTavernUnlocked,
@@ -1334,27 +1571,77 @@ setInterval(silentSave, 10000);
 
 function silentLoad() {
         const savedData = localStorage.getItem('medieval_clicker_autosave');
-        if (!savedData) return;
+        if (!savedData) {
+                initMissionsBoard();
+                renderMissions();
+                return;
+        }
         try {
-                const parsed = JSON.parse(savedData); gems = parsed.gems;
+                const parsed = JSON.parse(savedData);
+                if (!parsed) {
+                        initMissionsBoard();
+                        renderMissions();
+                        return;
+                }
+
+                // Wczytywanie podstawowych walut i flag logicznych
+                if (typeof parsed.gems === "number") gems = parsed.gems;
                 if (typeof parsed.magicalCrystals === "number") magicalCrystals = parsed.magicalCrystals;
+                if (typeof parsed.crystals_bought === "number") crystals_bought = parsed.crystals_bought;
                 if (typeof parsed.isTavernUnlocked === "boolean") isTavernUnlocked = parsed.isTavernUnlocked;
                 if (typeof parsed.isAltarUnlocked === "boolean") isAltarUnlocked = parsed.isAltarUnlocked;
-                Object.keys(upgrades).forEach(key => { if (parsed.upgrades[key]) { upgrades[key].level = parsed.upgrades[key].level; upgrades[key].cost = parsed.upgrades[key].cost; } });
-                Object.keys(shopUpgrades).forEach(key => { if (parsed.shopUpgrades[key]) { shopUpgrades[key].level = parsed.shopUpgrades[key].level; shopUpgrades[key].cost = parsed.shopUpgrades[key].cost; } });
-                initMissionsBoard(); // <- DODAJ TO TUTAJ, aby wylosować misje po załadowaniu profilu gracza
-                updateGems(); updateUpgradesUI(); updateShopUI(); updateAltarUI(); renderMissions();
-        } catch (e) { console.error(e); }
-        if (parsed.crystalPerksData) {
-                Object.keys(parsed.crystalPerksData).forEach(unit => {
-                        if (crystalPerks[unit]) {
-                                parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
-                                        if (crystalPerks[unit][idx]) crystalPerks[unit][idx].unlocked = unlockedState;
-                                });
-                        }
-                });
+                if (typeof parsed.isTutorialPassed === "boolean") {
+                        isTutorialPassed = parsed.isTutorialPassed;
+                        if (isTutorialPassed && tutorialOverlay) tutorialOverlay.style.display = 'none';
+                }
+
+                // BEZPIECZNE wczytywanie poziomów struktur kopalni (zapobiega crashom przy braku danych)
+                if (parsed.upgrades) {
+                        Object.keys(upgrades).forEach(key => {
+                                if (parsed.upgrades[key]) {
+                                        if (typeof parsed.upgrades[key].level === "number") upgrades[key].level = parsed.upgrades[key].level;
+                                        if (typeof parsed.upgrades[key].cost === "number") upgrades[key].cost = parsed.upgrades[key].cost;
+                                }
+                        });
+                }
+
+                // BEZPIECZNE wczytywanie ulepszeń stałych ze sklepu
+                if (parsed.shopUpgrades) {
+                        Object.keys(shopUpgrades).forEach(key => {
+                                if (parsed.shopUpgrades[key]) {
+                                        if (typeof parsed.shopUpgrades[key].level === "number") shopUpgrades[key].level = parsed.shopUpgrades[key].level;
+                                        if (typeof parsed.shopUpgrades[key].cost === "number") shopUpgrades[key].cost = parsed.shopUpgrades[key].cost;
+                                }
+                        });
+                }
+
+                // BEZPIECZNE przywracanie odblokowanych perków kryształowych
+                if (parsed.crystalPerksData) {
+                        Object.keys(parsed.crystalPerksData).forEach(unit => {
+                                if (crystalPerks[unit] && Array.isArray(parsed.crystalPerksData[unit])) {
+                                        parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
+                                                if (crystalPerks[unit][idx]) {
+                                                        crystalPerks[unit][idx].unlocked = !!unlockedState;
+                                                }
+                                        });
+                                }
+                        });
+                }
+
+        } catch (e) {
+                console.error("Błąd odczytu pliku zapisu (użyto domyślnych wartości):", e);
         }
+
+        // GWARANCJA STABILNOŚCI: Te funkcje wykonają się ZAWSZE na końcu.
+        // Interfejs gry się załaduje, a pętla automatycznego zapisu nie zostanie zablokowana.
+        initMissionsBoard();
+        updateGems();
+        updateUpgradesUI();
+        updateShopUI();
+        updateAltarUI();
+        renderMissions();
 }
 silentLoad();
 renderMissions();
 renderAllPerks();
+initPerkTooltips();
