@@ -1190,59 +1190,115 @@ body {
     background: #dc2626;
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
-.perks-container {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    justify-content: center;
+.altar-wrapper,
+.crystal-shop-wrapper {
+    padding: 30px 30px 60px 170px;
+    box-sizing: border-box;
+    height: 100vh;
+    overflow-y: auto; /* Włącza niezależne przewijanie tylko tej zakładki */
 }
 
-.perk-button {
-    width: 40px;
-    height: 40px;
-    background-color: #3a2f4c;
-    border: 2px solid #5d4778;
-    border-radius: 6px;
-    color: #e0d6ff;
-    font-weight: bold;
-    cursor: pointer;
+/* --- SEKCJA KRAKÓW I KAfeLKÓW KRYSZTAŁOWYCH --- */
+.crystal-shop-section {
+    margin-top: 10px;
+    padding-bottom: 50px;
+}
+
+.shop-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    color: #c084fc;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 2px 2px 2px #000;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.crystal-shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+}
+
+/* Unikalne, nieprostokątne kafelki (Kształt Runicznego Kryształu/Tarczy) */
+.crystal-shop-item {
     position: relative;
+    background: linear-gradient(135deg, #1e1135 0%, #0b0518 100%);
+    border: 2px solid #a855f7;
+    /* Efekt asymetrycznego kryształu zamiast nudnego prostokąta */
+    border-radius: 28px 4px 28px 4px; 
+    padding: 25px 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(168, 85, 247, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Rozświetlenie i uniesienie kafelka po najechaniu */
+.crystal-shop-item:hover {
+    border-color: #d8b4fe;
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.6), inset 0 0 10px rgba(168, 85, 247, 0.4);
+    transform: translateY(-5px);
+}
+
+.shop-item-front {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.shop-item-front .upgrade-icon {
+    margin-right: 0; /* Wyśrodkowanie ikony w tym layoucie */
+    border-color: #a855f7;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+.item-info {
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #f3e8ff;
+    text-shadow: 1px 1px 3px #000;
+    text-align: center;
+}
+
+/* Kontener na okrągłe runy ulepszeń (perki I, II, III) */
+.perks-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+/* Zmiana przycisków talentów w małe, mistyczne sfery */
+.perk-button {
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
+    width: 38px;
+    height: 38px;
+    border-radius: 50% !important; /* Totalne koło idealnie kontrastuje ze ściętą tarczą */
+    background: linear-gradient(135deg, #3b0764, #1e1b4b) !important;
+    border: 2px solid #a855f7 !important;
+    color: #d8b4fe !important;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
     transition: all 0.2s ease;
 }
 
-.perk-button:hover {
-    background-color: #4c3d63;
-    border-color: #a382db;
+.perk-button:hover:not(.unlocked) {
+    border-color: #f3e8ff !important;
+    color: #fff !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px #a855f7;
 }
 
 .perk-button.unlocked {
-    background-color: #246939;
-    border-color: #4cd175;
-    color: #fff;
-    cursor: default;
-}
-
-/* Prosty tooltip po najechaniu myszką */
-.perk-button::after {
-    content: attr(data-desc);
-    position: absolute;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #111;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    white-space: normal;
-    width: 160px;
-    z-index: 10;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-}
-
-.perk-button:hover::after {
-    opacity: 1;
+    background: linear-gradient(135deg, #a855f7, #6b21a8) !important;
+    border-color: #f3e8ff !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px #c084fc, inset 0 0 4px #fff !important;
 }

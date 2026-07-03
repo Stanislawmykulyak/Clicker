@@ -86,6 +86,8 @@ let gems = 0;
 let isTavernUnlocked = false;
 let isAltarUnlocked = false;
 
+let crystal_gems_bought = 0;
+
 function updateGems() {
         if (gemCounter) gemCounter.innerHTML = `Gems : ${formatNumber(gems)}💎`;
 }
@@ -107,104 +109,130 @@ function createFloatingText(x, y, amount, isLucky) {
 }
 
 function getQuarryGPS() {
-    let baseProduction = gameState.quarryCount * 10; // Przykładowa bazowa produkcja
-    
-    // Perk 1 dla Quarry: +25% produkcji
-    if (crystalPerks.quarry[0].unlocked) {
-        baseProduction *= 1.25;
-    }
-    
-    // Perk 3 dla Minera: Każdy poziom minera daje +1% do Quarry
-    if (crystalPerks.miner[2].unlocked) {
-        let bonus = 1 + (gameState.minerCount * 0.01);
-        baseProduction *= bonus;
-    }
-    
-    return baseProduction;
+        let baseProduction = upgrades.quarry.level * 10; // Zmienione z gameState.quarryCount
+
+        if (crystalPerks.quarry[0].unlocked) {
+                baseProduction *= 1.25;
+        }
+
+        if (crystalPerks.miner[2].unlocked) {
+                let bonus = 1 + (upgrades.miner.level * 0.01); // Zmienione z gameState.minerCount
+                baseProduction *= bonus;
+        }
+
+        return baseProduction;
 }
-
 function getMissionDuration(baseDuration) {
-    let duration = baseDuration;
-
-    // Perk 1 dla Minera: -10% czasu misji
-    if (crystalPerks.miner[0].unlocked) {
-        duration *= 0.90;
-    }
-    
-    return duration;
+        let duration = baseDuration;
+        if (crystalPerks.miner[0].unlocked) {
+                duration *= 0.90;
+        }
+        return duration;
 }
 
 function getCatapultCost() {
-    let baseCost = 50000; // Twój algorytm skalowania kosztu katapulty
-    
-    // Perk 3 dla Quarry: -10% kosztu Katapult
-    if (crystalPerks.quarry[2].unlocked) {
-        baseCost *= 0.90;
-    }
-    return baseCost;
+        let baseCost = 50000; // Twój algorytm skalowania kosztu katapulty
+
+        // Perk 3 dla Quarry: -10% kosztu Katapult
+        if (crystalPerks.quarry[2].unlocked) {
+                baseCost *= 0.90;
+        }
+        return baseCost;
 }
 
 function handleRockClick() {
-    let baseCritChance = 0.05; // standardowo 5% szansy
-    
-    // Perk 2 dla Minera: +3% szansy na kryta
-    if (crystalPerks.miner[1].unlocked) {
-        baseCritChance += 0.03;
-    }
-    
-    // Reszta Twojej logiki kliknięcia losująca kryta...
+        let baseCritChance = 0.05; // standardowo 5% szansy
+
+        // Perk 2 dla Minera: +3% szansy na kryta
+        if (crystalPerks.miner[1].unlocked) {
+                baseCritChance += 0.03;
+        }
+
+        // Reszta Twojej logiki kliknięcia losująca kryta...
 }
 
 function renderAllPerks() {
-    // Jeśli gracz jeszcze nie odblokował Ołtarza, możemy ukryć perki (opcjonalnie)
-    // if (!gameState.isAltarUnlocked) return; 
+        for (let unit in crystalPerks) {
+                let container = document.getElementById(`perks-${unit}`);
+                if (!container) continue;
 
-    for (let unit in crystalPerks) {
-        let container = document.getElementById(`perks-${unit}`);
-        if (!container) continue;
+                container.innerHTML = ""; // Czyszczenie starych przycisków
 
-        container.innerHTML = ""; // Czyszczenie starych przycisków
+                crystalPerks[unit].forEach((perk, index) => {
+                        let btn = document.createElement("button");
+                        btn.className = `perk-button ${perk.unlocked ? 'unlocked' : ''}`;
 
-        crystalPerks[unit].forEach((perk, index) => {
-            let btn = document.createElement("button");
-            btn.className = `perk-button ${perk.unlocked ? 'unlocked' : ''}`;
-            
-            // Wyświetlamy rzymską cyfrę I, II, III lub koszt jeśli zablokowany
-            btn.innerText = perk.unlocked ? "✓" : (index + 1);
-            
-            // Pełny opis wraz z kosztem w podpowiedzi (tooltip)
-            let tooltipText = `${perk.name}: ${perk.desc} ${perk.unlocked ? '(Odblokowano)' : `[Koszt: ${perk.cost} Kryształów]`}`;
-            btn.setAttribute("data-desc", tooltipText);
+                        // Wyświetlamy ptaszek jeśli kupione, lub cyfrę rzymską I, II, III
+                        const romanNumerals = ["I", "II", "III"];
+                        btn.innerText = perk.unlocked ? "✓" : (romanNumerals[index] || (index + 1));
 
-            // Akcja po kliknięciu
-            if (!perk.unlocked) {
-                btn.onclick = () => buyCrystalPerk(unit, index);
-            }
+                        // Akcja po kliknięciu
+                        if (!perk.unlocked) {
+                                btn.onclick = (e) => {
+                                        e.stopPropagation();
+                                        buyCrystalPerk(unit, index);
+                                };
+                        }
 
-            container.appendChild(btn);
-        });
-    }
+                        // Integracja z RPG Tooltipem na najechanie myszką
+                        btn.addEventListener('mouseenter', () => {
+                                if (storeTooltip) {
+                                        storeTooltip.innerHTML = `
+                        <div class="tooltip-title" style="color: #c084fc;">${perk.name}</div>
+                        <div class="tooltip-desc">${perk.desc}</div>
+                        <div class="tooltip-cost" style="color: #a855f7;">
+                            ${perk.unlocked ? "✨ ALREADY UNLOCKED" : "Price: " + perk.cost + " 🔮"}
+                        </div>
+                    `;
+                                        storeTooltip.style.display = 'block';
+                                }
+                        });
+
+                        btn.addEventListener('mousemove', (e) => {
+                                if (!storeTooltip) return;
+                                let left = e.clientX + 15;
+                                let top = e.clientY + 15;
+                                if (left + storeTooltip.offsetWidth > window.innerWidth) left = e.clientX - storeTooltip.offsetWidth - 15;
+                                if (top + storeTooltip.offsetHeight > window.innerHeight) top = e.clientY - storeTooltip.offsetHeight - 15;
+                                storeTooltip.style.left = left + 'px';
+                                storeTooltip.style.top = top + 'px';
+                        });
+
+                        btn.addEventListener('mouseleave', () => {
+                                if (storeTooltip) storeTooltip.style.display = 'none';
+                        });
+
+                        container.appendChild(btn);
+                });
+        }
 }
 
-// Funkcja zakupu perka
 function buyCrystalPerk(unit, index) {
-    let perk = crystalPerks[unit][index];
+        let perk = crystalPerks[unit][index];
 
-    // DOPASUJ: Zmień 'gameState.magicalCrystals' na swoją faktyczną zmienną kryształów!
-    if (gameState.magicalCrystals >= perk.cost && !perk.unlocked) {
-        gameState.magicalCrystals -= perk.cost;
-        perk.unlocked = true;
+        // FIX: Zamiana undefined gameState na właściwe zmienne globalne i poprawne odświeżanie UI
+        if (magicalCrystals >= perk.cost && !perk.unlocked) {
+                magicalCrystals -= perk.cost;
+                perk.unlocked = true;
 
-        // Odświeżamy UI kryształów i perków
-        updateUI(); 
-        renderAllPerks();
-        
-        console.log(`Odblokowano perk: ${perk.name} dla ${unit}`);
-    } else if (perk.unlocked) {
-        alert("Ten talent jest już odblokowany!");
-    } else {
-        alert("Nie masz wystarczającej liczby Magicznych Kryształów!");
-    }
+                // Odświeżamy widok ołtarza, walut oraz siatki umiejętności
+                updateAltarUI();
+                renderAllPerks();
+
+                // Aktualizacja tooltipu po zakupie, żeby natychmiast pokazał stan "ODBLOKOWANO"
+                if (storeTooltip) {
+                        storeTooltip.innerHTML = `
+                <div class="tooltip-title" style="color: #c084fc;">${perk.name}</div>
+                <div class="tooltip-desc">${perk.desc}</div>
+                <div class="tooltip-cost" style="color: #a855f7;">✨ ALREADY UNLOCKED</div>
+            `;
+                }
+                console.log(`Odblokowano perk: ${perk.name} dla ${unit}`);
+        } else if (perk.unlocked) {
+                alert("Ten talent jest już odblokowany!");
+        } else {
+                alert("Nie masz wystarczającej liczby Magicznych Kryształów!");
+        }
 }
 
 const rockImg = document.querySelector('.GemRock img');
@@ -221,6 +249,9 @@ if (accRock) {
                 let isLucky = false;
                 let gauntletLvl = shopUpgrades.lucky_gauntlet ? shopUpgrades.lucky_gauntlet.level : 0;
                 let currentLuckyChance = lucky_gem_percentage + (gauntletLvl * 1);
+                if (crystalPerks.miner[1].unlocked) {
+                        currentLuckyChance += 3; // +3% szansy na kryta
+                }
                 let currentLuckyMultiplier = 5 + (gauntletLvl * 2);
 
                 if ((Math.random() * 100) < currentLuckyChance) {
@@ -239,31 +270,31 @@ if (accRock) {
         });
 }
 let crystalPerks = {
-    miner: [
-        { id: "miner_p1", name: "Szybkie Buty", cost: 3, unlocked: false, desc: "Skraca bazowy czas wszystkich misji w Karczmie o 10%." },
-        { id: "miner_p2", name: "Szczęśliwy Kilof", cost: 7, unlocked: false, desc: "Zwiększa szansę na krytyczne kliknięcie o 3%." },
-        { id: "miner_p3", name: "Górniczy Sojusz", cost: 15, unlocked: false, desc: "Każdy poziom Minera zwiększa produkcję Quarry o 1%." }
-    ],
-    quarry: [
-        { id: "quarry_p1", name: "Głębokie Odkrywki", cost: 5, unlocked: false, desc: "Zwiększa produkcję Quarry o 25%." },
-        { id: "quarry_p2", name: "Kamienny Pancerz", cost: 10, unlocked: false, desc: "Zwiększa zyski Gems z misji typu 'Walka/Obrona' o 20%." },
-        { id: "quarry_p3", name: "Optymalizacja Masowa", cost: 20, unlocked: false, desc: "Zmniejsza koszt zakupu Catapult o 10%." }
-    ],
-    catapult: [
-        { id: "catapult_p1", name: "Dłuższy Zasięg", cost: 8, unlocked: false, desc: "Zwiększa produkcję Catapult o 30%." },
-        { id: "catapult_p2", name: "Wsparcie Artylerii", cost: 15, unlocked: false, desc: "Misje w Karczmie trwają o 15% krócej, jeśli przypiszesz min. 1 Katapultę." },
-        { id: "catapult_p3", name: "Grad Kamieni", cost: 30, unlocked: false, desc: "Odblokowuje aktywną umiejętność (Zrzut głazów raz na 5 min)." }
-    ],
-    iron_hammer: [
-        { id: "iron_hammer_p1", name: "Kowalska Precyzja", cost: 10, unlocked: false, desc: "Zwiększa produkcję Iron Hammer o 25%." },
-        { id: "iron_hammer_p2", name: "Zbrojna Eskorta", cost: 18, unlocked: false, desc: "Zmniejsza koszt odświeżenia tablicy misji (Reroll) o 50%." },
-        { id: "iron_hammer_p3", name: "Hartowanie Stali", cost: 35, unlocked: false, desc: "Każdy posiadany Iron Hammer zwiększa Twoją siłę kliknięcia o +5 Gems." }
-    ],
-    mine_inspector: [
-        { id: "mine_inspector_p1", name: "Srogie Oko", cost: 15, unlocked: false, desc: "Zwiększa efektywność Minerów i Quarry o dodatkowe 10%." },
-        { id: "mine_inspector_p2", name: "Biurokracja", cost: 25, unlocked: false, desc: "Zwiększa nagrody Gems ze wszystkich misji o 20%." },
-        { id: "mine_inspector_p3", name: "Audyt Efektywności", cost: 50, unlocked: false, desc: "Zmniejsza bazowy koszt kolejnych poziomów Mine Inspector o 15%." }
-    ]
+        miner: [
+                { id: "miner_p1", name: "Szybkie Buty", cost: 3, unlocked: false, desc: "Skraca bazowy czas wszystkich misji w Karczmie o 10%." },
+                { id: "miner_p2", name: "Szczęśliwy Kilof", cost: 7, unlocked: false, desc: "Zwiększa szansę na krytyczne kliknięcie o 3%." },
+                { id: "miner_p3", name: "Górniczy Sojusz", cost: 15, unlocked: false, desc: "Każdy poziom Minera zwiększa produkcję Quarry o 1%." }
+        ],
+        quarry: [
+                { id: "quarry_p1", name: "Głębokie Odkrywki", cost: 5, unlocked: false, desc: "Zwiększa produkcję Quarry o 25%." },
+                { id: "quarry_p2", name: "Kamienny Pancerz", cost: 10, unlocked: false, desc: "Zwiększa zyski Gems z misji typu 'Walka/Obrona' o 20%." },
+                { id: "quarry_p3", name: "Optymalizacja Masowa", cost: 20, unlocked: false, desc: "Zmniejsza koszt zakupu Catapult o 10%." }
+        ],
+        catapult: [
+                { id: "catapult_p1", name: "Dłuższy Zasięg", cost: 8, unlocked: false, desc: "Zwiększa produkcję Catapult o 30%." },
+                { id: "catapult_p2", name: "Wsparcie Artylerii", cost: 15, unlocked: false, desc: "Misje w Karczmie trwają o 15% krócej, jeśli przypiszesz min. 1 Katapultę." },
+                { id: "catapult_p3", name: "Grad Kamieni", cost: 30, unlocked: false, desc: "Odblokowuje aktywną umiejętność (Zrzut głazów raz na 5 min)." }
+        ],
+        iron_hammer: [
+                { id: "iron_hammer_p1", name: "Kowalska Precyzja", cost: 10, unlocked: false, desc: "Zwiększa produkcję Iron Hammer o 25%." },
+                { id: "iron_hammer_p2", name: "Zbrojna Eskorta", cost: 18, unlocked: false, desc: "Zmniejsza koszt odświeżenia tablicy misji (Reroll) o 50%." },
+                { id: "iron_hammer_p3", name: "Hartowanie Stali", cost: 35, unlocked: false, desc: "Każdy posiadany Iron Hammer zwiększa Twoją siłę kliknięcia o +5 Gems." }
+        ],
+        mine_inspector: [
+                { id: "mine_inspector_p1", name: "Srogie Oko", cost: 15, unlocked: false, desc: "Zwiększa efektywność Minerów i Quarry o dodatkowe 10%." },
+                { id: "mine_inspector_p2", name: "Biurokracja", cost: 25, unlocked: false, desc: "Zwiększa nagrody Gems ze wszystkich misji o 20%." },
+                { id: "mine_inspector_p3", name: "Audyt Efektywności", cost: 50, unlocked: false, desc: "Zmniejsza bazowy koszt kolejnych poziomów Mine Inspector o 15%." }
+        ]
 };
 
 let upgrades = {
@@ -323,16 +354,81 @@ function resetProgress() {
 }
 
 function updateUpgradesUI() {
-        const upgradeNames = { miner: "Miner", quarry: "Quarry", catapult: "Catapult", iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector", runic_golem: "Runic Golem", alchemic: "Alchemic", earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower" };
+        const upgradeNames = { 
+                miner: "Miner", quarry: "Quarry", catapult: "Catapult", 
+                iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector", 
+                runic_golem: "Runic Golem", alchemic: "Alchemic", 
+                earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower" 
+        };
+
+        // Opisy wyjaśniające, co robi dane ulepszenie
+        const upgradeDescriptions = {
+                miner: "Workers mining gems from deep underground",
+                quarry: "Kamieniołom odkrywkowy zwiększający wydobycie.",
+                catapult: "Miotacz głazów kruszący całe sekcje skalne.",
+                iron_hammers: "Zakon młotów rozbijający najtwardsze klastry.",
+                mine_inspector: "Zwiększa dyscyplinę i optymalizuje normy.",
+                runic_golem: "Starożytny strażnik napędzany energią ziemi.",
+                alchemic: "Transmutuje pospolity kamień w czyste klejnoty.",
+                earth_mage: "Wywołuje rezonans sejsmiczny w głębokich żyłach.",
+                deep_shaft: "Gigantyczny pionowy wind-szyb kopalniany.",
+                gem_tower: "Wieża pryzmatyczna skupiająca czyste światło krystaliczne."
+        };
 
         Object.keys(upgrades).forEach(key => {
                 const up = upgrades[key];
+                let calculatedCost = up.cost;
+
+                // Zniżka z perku: -10% kosztu Katapult
+                if (key === 'catapult' && crystalPerks.quarry[2].unlocked) {
+                        calculatedCost = Math.floor(calculatedCost * 0.90);
+                }
                 const upgradeContainer = document.querySelector(`.${key}-upgrades`);
                 if (!upgradeContainer) return;
 
                 const priceEl = upgradeContainer.querySelector(`.${key}-price`);
                 const lvlEl = upgradeContainer.querySelector(`.${key}-lvl`);
                 const btnEl = upgradeContainer.querySelector(`.${key}-upgrade`);
+
+                // Dynamiczne tworzenie opisu pod przyciskiem (Układ kolumnowy wewnątrz wiersza)
+                let descEl = upgradeContainer.querySelector('.dynamic-upgrade-desc');
+                if (!descEl) {
+                        descEl = document.createElement('div');
+                        descEl.className = 'dynamic-upgrade-desc';
+                        descEl.style.fontSize = '0.78rem';
+                        descEl.style.color = '#94a3b8';
+                        descEl.style.marginTop = '4px';
+                        descEl.style.textAlign = 'left';
+                        
+                        const infoWrapper = document.createElement('div');
+                        infoWrapper.className = 'upgrade-info-wrapper';
+                        infoWrapper.style.display = 'flex';
+                        infoWrapper.style.flexDirection = 'column';
+                        infoWrapper.style.flexGrow = '1';
+                        infoWrapper.style.alignItems = 'flex-start';
+                        
+                        btnEl.parentNode.insertBefore(infoWrapper, btnEl);
+                        infoWrapper.appendChild(btnEl);
+                        infoWrapper.appendChild(descEl);
+                }
+
+                // Kalkulacja realnej produkcji pojedynczej jednostki (uwzględnia Sklep i Perki)
+                let shopKey = key === 'miner' ? 'miner_gear' : key === 'quarry' ? 'quarry_gear' : key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
+                if (key === 'mine_inspector') shopKey = 'inspector_gear';
+                if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
+                if (key === 'runic_golem') shopKey = 'golem_gear';
+                
+                let perkMultiplier = 1;
+                if (key === 'quarry') {
+                        if (crystalPerks.quarry[0].unlocked) perkMultiplier *= 1.25;
+                        if (crystalPerks.miner[2].unlocked) perkMultiplier *= (1 + upgrades.miner.level * 0.01);
+                }
+                if (key === 'catapult' && crystalPerks.catapult[0].unlocked) perkMultiplier *= 1.30;
+                if (key === 'iron_hammers' && crystalPerks.iron_hammer[0].unlocked) perkMultiplier *= 1.25;
+                if (crystalPerks.mine_inspector[0].unlocked && (key === 'miner' || key === 'quarry')) perkMultiplier *= 1.10;
+                
+                let shopMultiplier = Math.pow(shopUpgrades[shopKey]?.multiplier || 1, shopUpgrades[shopKey]?.level || 0);
+                let currentSingleEfficiency = up.efficiency * shopMultiplier * perkMultiplier;
 
                 let isUnlocked = true;
                 if (key === 'quarry' && upgrades.miner.level < 5) isUnlocked = false;
@@ -349,16 +445,18 @@ function updateUpgradesUI() {
                         upgradeContainer.classList.add('locked-upgrade');
                         if (btnEl) { btnEl.innerHTML = "???"; btnEl.disabled = true; }
                         if (lvlEl) lvlEl.innerHTML = "🔒";
-                        if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(up.cost)}$`;
+                        if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(calculatedCost)} 💎`;
+                        descEl.innerHTML = "Mądrość klanu wymaga wyższego poziomu poprzednich struktur.";
                 } else {
                         upgradeContainer.classList.remove('locked-upgrade');
                         if (btnEl) btnEl.innerHTML = upgradeNames[key];
-                        if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(up.cost)}$`;
+                        if (priceEl) priceEl.innerHTML = `Price: ${formatNumber(calculatedCost)} 💎`;
                         if (lvlEl) lvlEl.innerHTML = up.level === up.maxLevel ? `MAX LVL` : `Lvl: ${up.level}`;
+                        descEl.innerHTML = `${upgradeDescriptions[key]} (+${formatNumber(currentSingleEfficiency)}/s)`;
                 }
 
                 if (isUnlocked) {
-                        if (gems >= up.cost && up.level < up.maxLevel) {
+                        if (gems >= calculatedCost && up.level < up.maxLevel) {
                                 upgradeContainer.classList.remove('cant-afford');
                                 upgradeContainer.classList.add('can-afford');
                                 if (btnEl) btnEl.disabled = false;
@@ -386,8 +484,13 @@ function buyUpgrade(upgradeKey) {
 
         if (!isUnlocked) return;
 
-        if (gems >= up.cost && up.level < up.maxLevel) {
-                gems -= up.cost;
+        let currentCost = up.cost;
+        if (upgradeKey === 'catapult' && crystalPerks.quarry[2].unlocked) {
+                currentCost = Math.floor(currentCost * 0.90);
+        }
+
+        if (gems >= currentCost && up.level < up.maxLevel) {
+                gems -= currentCost;
                 up.level++;
                 if (up.milestones[up.level]) up.efficiency *= up.milestones[up.level];
                 up.cost = Math.floor(up.baseCost * Math.pow(1.15, up.level));
@@ -395,6 +498,7 @@ function buyUpgrade(upgradeKey) {
                 updateUpgradesUI();
                 updateShopUI();
         }
+
 }
 
 Object.keys(upgrades).forEach(key => {
@@ -482,11 +586,11 @@ function formatWithSuffix(value) {
 }
 
 function getNextCrystalCost() {
-        return Math.floor(baseCrystalCost * Math.pow(costMultiplier, magicalCrystals));
+        return Math.floor(baseCrystalCost * Math.pow(costMultiplier, crystal_gems_bought));
 }
 
 function getMaxCrystalsAffordable() {
-        let currentGems = gems; let count = 0; let totalCost = 0; let tempCrystals = magicalCrystals;
+        let currentGems = gems; let count = 0; let totalCost = 0; let tempCrystals = crystal_gems_bought;
         while (true) {
                 let nextCost = Math.floor(baseCrystalCost * Math.pow(costMultiplier, tempCrystals));
                 if (currentGems >= nextCost) {
@@ -513,6 +617,7 @@ function updateAltarUI() {
 function performRitual(crystalAmount, totalCost) {
         gems -= totalCost;
         magicalCrystals += crystalAmount;
+        crystal_gems_bought += crystalAmount;
         updateGems();
         updateAltarUI();
 
@@ -744,24 +849,24 @@ function initMissionsBoard() {
 }
 
 function playerOwnsRequirements(mission) {
-    if (!mission.requirements) return true;
-    for (let unitKey in mission.requirements) {
-        if ((upgrades[unitKey]?.level || 0) < mission.requirements[unitKey]) {
-            return false;
+        if (!mission.requirements) return true;
+        for (let unitKey in mission.requirements) {
+                if ((upgrades[unitKey]?.level || 0) < mission.requirements[unitKey]) {
+                        return false;
+                }
         }
-    }
-    return true;
+        return true;
 }
 
 function playerAssignedRequirements(mission) {
-    if (!mission.requirements) return true;
-    for (let unitKey in mission.requirements) {
-        const assigned = mission.setupUnits[unitKey] || 0;
-        if (assigned < mission.requirements[unitKey]) {
-            return false;
+        if (!mission.requirements) return true;
+        for (let unitKey in mission.requirements) {
+                const assigned = mission.setupUnits[unitKey] || 0;
+                if (assigned < mission.requirements[unitKey]) {
+                        return false;
+                }
         }
-    }
-    return true;
+        return true;
 }
 
 function getFreeUnits(unitKey) {
@@ -834,7 +939,7 @@ function startMission(missionId) {
         const mission = missionsState.find(m => m.id === missionId);
         if (!mission || mission.active) return;
         if (!playerOwnsRequirements(mission)) return;
-        
+
         if (!playerAssignedRequirements(mission)) {
                 alert("Nie przypisałeś wszystkich wymaganych jednostek do tej misji!");
                 return;
@@ -866,14 +971,14 @@ function renderMissions() {
         if (!container) return;
 
         const upgradeNames = { miner: "Miner", quarry: "Quarry", catapult: "Catapult", iron_hammers: "Iron Hammer Order", mine_inspector: "Mine Inspector", runic_golem: "Runic Golem", alchemic: "Alchemic", earth_mage: "Earth Mage", deep_shaft: "Deep Shaft", gem_tower: "Gem Tower" };
-        
+
         // NOWE KOLORY: Zgodnie z Twoim życzeniem (Zwykła=Niebieska, Rzadka=Zielona, Mityczna=Pomarańczowa, Legendarna=Złota)
-        const rarityColors = { 
-                "Normal": "#3b82f6", 
-                "Rare": "#22c55e", 
-                "Epic": "#a855f7", 
-                "Mythic": "#f97316", 
-                "Legendary": "#ffd700" 
+        const rarityColors = {
+                "Normal": "#3b82f6",
+                "Rare": "#22c55e",
+                "Epic": "#a855f7",
+                "Mythic": "#f97316",
+                "Legendary": "#ffd700"
         };
 
         let htmlContent = `
@@ -1034,6 +1139,16 @@ function handleSidebarNavigation() {
                                         btn.classList.remove('locked-sidebar-btn');
                                 }
                         }
+
+                        if (targetTabId === 'crystal-shop-tab') {
+                                if (!isAltarUnlocked) {
+                                        if (labelSpan) labelSpan.innerText = "???";
+                                        btn.classList.add('locked-sidebar-btn');
+                                } else {
+                                        if (labelSpan) labelSpan.innerText = "Crystal Shop";
+                                        btn.classList.remove('locked-sidebar-btn');
+                                }
+                        }
                 });
         }
 
@@ -1045,6 +1160,7 @@ function handleSidebarNavigation() {
                         // Sprawdzenie stanu logicznych flag zamiast aktualnego stanu portfela
                         if (targetTabId === 'tavern-tab' && !isTavernUnlocked) return;
                         if (targetTabId === 'altar-tab' && !isAltarUnlocked) return;
+                        if (targetTabId === 'crystal-shop-tab' && !isAltarUnlocked) return;
 
                         sidebarButtons.forEach(b => b.classList.remove('active'));
                         tabContents.forEach(tab => tab.classList.add('hidden'));
@@ -1054,6 +1170,7 @@ function handleSidebarNavigation() {
                         if (targetTab) {
                                 targetTab.classList.remove('hidden');
                                 if (targetTabId === 'tavern-tab') renderMissions();
+                                if (targetTabId === 'altar-tab' || targetTabId === 'crystal-shop-tab') renderAllPerks();
                         }
                 };
         });
@@ -1077,7 +1194,11 @@ function saveGameToFile() {
                 isTavernUnlocked: isTavernUnlocked,
                 isAltarUnlocked: isAltarUnlocked,
                 upgrades: {},
-                shopUpgrades: {}
+                shopUpgrades: {},
+                crystalPerksData: Object.keys(crystalPerks).reduce((acc, unit) => {
+                        acc[unit] = crystalPerks[unit].map(p => p.unlocked);
+                        return acc;
+                }, {})
         };
         Object.keys(upgrades).forEach(key => { dataToSave.upgrades[key] = { level: upgrades[key].level, cost: upgrades[key].cost, efficiency: upgrades[key].efficiency }; });
         Object.keys(shopUpgrades).forEach(key => { dataToSave.shopUpgrades[key] = { level: shopUpgrades[key].level, cost: shopUpgrades[key].cost }; });
@@ -1106,6 +1227,15 @@ function loadGameFromFile(event) {
                 } catch (err) { alert("This scroll is tainted!"); }
         };
         reader.readAsText(file);
+        if (parsed.crystalPerksData) {
+                Object.keys(parsed.crystalPerksData).forEach(unit => {
+                        if (crystalPerks[unit]) {
+                                parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
+                                        if (crystalPerks[unit][idx]) crystalPerks[unit][idx].unlocked = unlockedState;
+                                });
+                        }
+                });
+        }
 }
 
 const fileInput = document.getElementById('file-input');
@@ -1120,9 +1250,27 @@ function gameLoop(timestamp) {
         while (accumulatedTime >= 1000) {
                 let globalMinerMultiplier = 1;
                 if (upgrades.quarry.level >= 10 && Math.random() * 100 < (upgrades.quarry.level >= 100 ? 50 : upgrades.quarry.level > 50 ? 20 : 5)) { globalMinerMultiplier = 2; }
+
                 Object.keys(upgrades).forEach(key => {
                         let income = upgrades[key].level * upgrades[key].efficiency;
                         if (key === 'miner') income *= globalMinerMultiplier;
+
+                        // --- INTEGRACJA PERKÓW Z APG DO EKONOMII ---
+                        if (key === 'quarry') {
+                                if (crystalPerks.quarry[0].unlocked) income *= 1.25; // +25% prod
+                                if (crystalPerks.miner[2].unlocked) income *= (1 + upgrades.miner.level * 0.01); // +1% za poziom minera
+                        }
+                        if (key === 'catapult' && crystalPerks.catapult[0].unlocked) {
+                                income *= 1.30; // +30% prod
+                        }
+                        if (key === 'iron_hammers' && crystalPerks.iron_hammer[0].unlocked) {
+                                income *= 1.25; // +25% prod
+                        }
+                        if (crystalPerks.mine_inspector[0].unlocked && (key === 'miner' || key === 'quarry')) {
+                                income *= 1.10; // +10% prod dla obu struktur
+                        }
+                        // -------------------------------------------
+
                         let shopKey = key === 'miner' ? 'miner_gear' : key === 'quarry' ? 'quarry_gear' : key === 'catapult' ? 'catapult_gear' : `${key}_gear`;
                         if (key === 'mine_inspector') shopKey = 'inspector_gear';
                         if (key === 'iron_hammers') shopKey = 'iron_hammers_gear';
@@ -1171,7 +1319,12 @@ function silentSave() {
                 isTavernUnlocked: isTavernUnlocked,
                 isAltarUnlocked: isAltarUnlocked,
                 upgrades: {},
-                shopUpgrades: {}
+                shopUpgrades: {},
+                crystalPerksData: Object.keys(crystalPerks).reduce((acc, unit) => {
+                        acc[unit] = crystalPerks[unit].map(p => p.unlocked);
+                        return acc;
+                }, {})
+
         };
         Object.keys(upgrades).forEach(key => { dataToSave.upgrades[key] = { level: upgrades[key].level, cost: upgrades[key].cost, efficiency: upgrades[key].efficiency }; });
         Object.keys(shopUpgrades).forEach(key => { dataToSave.shopUpgrades[key] = { level: shopUpgrades[key].level, cost: shopUpgrades[key].cost }; });
@@ -1192,6 +1345,16 @@ function silentLoad() {
                 initMissionsBoard(); // <- DODAJ TO TUTAJ, aby wylosować misje po załadowaniu profilu gracza
                 updateGems(); updateUpgradesUI(); updateShopUI(); updateAltarUI(); renderMissions();
         } catch (e) { console.error(e); }
+        if (parsed.crystalPerksData) {
+                Object.keys(parsed.crystalPerksData).forEach(unit => {
+                        if (crystalPerks[unit]) {
+                                parsed.crystalPerksData[unit].forEach((unlockedState, idx) => {
+                                        if (crystalPerks[unit][idx]) crystalPerks[unit][idx].unlocked = unlockedState;
+                                });
+                        }
+                });
+        }
 }
 silentLoad();
 renderMissions();
+renderAllPerks();

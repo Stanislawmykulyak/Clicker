@@ -13,6 +13,7 @@
         <button class="sidebar-btn active" data-tab="mine-tab"><span>Mine</span></button>
         <button class="sidebar-btn" data-tab="tavern-tab"><span>Tavern</span></button>
         <button class="sidebar-btn" data-tab="altar-tab"><span>Altar</span></button>
+        <button class="sidebar-btn" data-tab="crystal-shop-tab"><span>Crystal Shop</span></button>
         <button class="sidebar-btn" data-tab="settings-tab"><span>Ustawienia</span></button>
     </div>
 
@@ -136,7 +137,7 @@
         </div>
     </div>
 
-    <!-- ZAKŁADKA KARCZMY (MISJE) -->
+    <!-- ZAKŁADKA KARCZMY -->
     <div id="tavern-tab" class="tab-content hidden">
         <div class="tavern-wrapper">
             <h2 class="tavern-title">📜 Mining Mission Board</h2>
@@ -163,7 +164,59 @@
         </div>
     </div>
 
-    <!-- NOWA UKRYWANA ZAKŁADKA USTAWIEŃ -->
+    <!-- ZAKŁADKA SKLEPU Z KRYSZTAŁAMI -->
+    <div id="crystal-shop-tab" class="tab-content hidden">
+        <div class="crystal-shop-wrapper">
+            <div class="crystal-shop-section">
+                <h3 class="shop-title">🔮 Crystal Empowerments 🔮</h3>
+                <div class="crystal-shop-grid">
+                    <div class="crystal-shop-item">
+                        <div class="shop-item-front">
+                            <img src="media/miner-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Miner Perks">
+                            <span class="item-info">Miner Upgrades</span>
+                        </div>
+                        <div id="perks-miner" class="perks-container"></div>
+                    </div>
+                    <div class="crystal-shop-item">
+                        <div class="shop-item-front">
+                            <img src="media/quarry-upgrade.png" width="50" height="50" class="upgrade-icon" alt="Quarry Perks">
+                            <span class="item-info">Quarry Upgrades</span>
+                        </div>
+                        <div id="perks-quarry" class="perks-container"></div>
+                    </div>
+                    <div class="crystal-shop-item">
+                        <div class="shop-item-front">
+                            <img src="media/catapult-upgrade.jpg" width="50" height="50" class="upgrade-icon" alt="Catapult Perks">
+                            <span class="item-info">Catapult Upgrades</span>
+                        </div>
+                        <div id="perks-catapult" class="perks-container"></div>
+                    </div>
+                    <div class="crystal-shop-item">
+                        <div class="shop-item-front">
+                            <img src="media/iron-hammers.png" width="50" height="50" class="upgrade-icon" alt="Iron Hammer Perks">
+                            <span class="item-info">Iron Hammer Order</span>
+                        </div>
+                        <div id="perks-iron_hammer" class="perks-container"></div>
+                    </div>
+                    <div class="crystal-shop-item">
+                        <div class="shop-item-front">
+                            <img src="media/mine-inspector.png" width="50" height="50" class="upgrade-icon" alt="Inspector Perks">
+                            <span class="item-info">Mine Inspector</span>
+                        </div>
+                        <div id="perks-mine_inspector" class="perks-container"></div>
+                    </div>
+                    <!-- Poniższe kontenery są gotowe na przyszłość -->
+                    <div style="display:none;" id="perks-runic_golem"></div>
+                    <div style="display:none;" id="perks-alchemic"></div>
+                    <div style="display:none;" id="perks-earth_mage"></div>
+                    <div style="display:none;" id="perks-deep_shaft"></div>
+                    <div style="display:none;" id="perks-gem_tower"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZAKŁADKA USTAWIEŃ -->
     <div id="settings-tab" class="tab-content hidden">
         <div style="padding: 30px 30px 30px 170px;">
             <h2>Królewskie Ustawienia</h2>
@@ -196,4 +249,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
