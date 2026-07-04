@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Commander - Strategy RPG</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- GÓRNY PASEK ZASOBÓW -->
+    <header id="resources-bar">
+        <div class="resource">🎖 Commander Coins: <span id="res-cc">100</span></div>
+    </header>
+
+    <!-- GŁÓWNY KONTENER GRY -->
+    <div id="game-container">
+        <!-- NAWIGACJA / SIDEBAR -->
+        <nav id="navigation-sidebar">
+            <button class="nav-btn active" data-target="map-screen">🗺 Mapa Świata</button>
+            <button class="nav-btn" data-target="barracks-screen">⚔ Koszary i Frakcje</button>
+            <button class="nav-btn" data-target="missions-screen">📜 Tawerna i Misje</button>
+        </nav>
+
+        <!-- EKRAN ROZGRYWKI -->
+        <main id="game-viewport">
+            <!-- Tutaj JS będzie wstrzykiwał odpowiednie ekrany -->
+            <div id="active-screen"></div>
+        </main>
+    </div>
+
+    <!-- SKRYPTY (Rozbite modułowo) -->
+    <script src="game.js"></script>
+    <script src="map.js"></script>
+    <script src="barracks.js"></script>
+</body>
+</html>

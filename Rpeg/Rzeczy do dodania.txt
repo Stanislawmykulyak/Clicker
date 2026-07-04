@@ -1,0 +1,76 @@
+Rzeczy do dodania
+
+-Waluta Commander Coins
+
+
+
+-Interaktywna mapa z roznymi regionami/miejscami , flagami /pinezkami oznaczajacymi obozowisko , tereny zajete oraz do podbicia ,
+
+
+
+-Rozne frakcje typu : Rycerze , Lucznicy , Magowie , Katapulty
+
+
+
+-Podzial na jednostki z roznorodnymi dowodcami ktorzy maja swoje perki i buffy i boostuja caly oddzial
+
+
+
+-Systemem werbowania ,szkolenia ,uzbrajania i leczenia wojska , budujac rozne budynki np. Szpital , Kowal , Koszary
+
+
+
+- System misji w ktorych bedziesz mial opcje wyslania kilku/kilkuanstu jednostek na jakis czas na misje , podczas tego czasu jednostki beda poza twoim zasiegiem i nie bedziesz mogl z nich korzystac + bedzie szansa na niepowodzenieczyli np. Czesc jednostek umrze ale za misje bedziesz dostawac coiny oraz jesli misja sie powiedzie to wzrosna morale jednostek ktore wyslales i relacje z kimkolwiek kto ci ta misje dal , wiesniacy ,alchemicy , kowale etc.. i to moze skutkowac znizkami u nich
+
++ Misje moga byc tez bojowe np. Wyslanie kilku magow i alchemikow do oslabienia wrogow i jesli im sie powiedzie to wrog ma np.-15% zycia ale jesli sie nie powiedzie to jednostki sa zlapane i wrog dostaje +5% zycia bo jest bardziej wyczulony .
+
+
+
+- System handlu / Rzemiosla z Kowalami , Farmerami , Alchemikami , Magikami
+
+
+
+-Craftowanie ppteznych przedmiotow/receptur dla np. Dowodcow , legionow wymagajace surowcow z odleglych terenow , magii oraz mistrza kowalskiego ktore beda mialy niesamowite efekty np. Jakis amulet ktory sprawia ze morale nigdy nie osiagna 0 i np. Dowodca bedzie mial 1/2 sloty na takie przedmioty i one beda mialy wplyw na jego legion oraz bedzie tez mogl je nosic dowodca/gracz z 3 slotami np.
+
+I wtedy beda oddzialywac na cala armie
+
+
+
+-Tawerna w ktorej beda misje , werbowanie najemnikow i wiele waznyxb rzeczy bedzie sie tam dzialo
+
+
+
+-Upgrade-y do zbroi , hp , bronii zolnierzy , mozliwosc zaklecia zbroi czy bronii
+
+
+
+-Drzewka technologiczne w ktorych mozna bedzie rozwijac technologie oraz umiejetnosci np. Magow
+
+
+
+-Umiejetnosci dowodcy czyli twoje ktore wplywalyby zarowno na ekonomie jak i na skutecznosc bojowa .
+
+
+
+-Fabula w ktorej jako dowodca musialbys uzywajac wszystkich mozliwych surowcow odbic ziemie i ochronic krolestwo , walczac z potworami i innymi frakcjami , zdobywajac po drodze przyjaciol i pozyskujac nowe umiejetnosci
+
+
+
+
+
+-Nowy system walk oraz menu wyboru jednostek w ktorym wybieraloby sie ktoee legiony /jednostki maja walczyc , bylaby pokazana sila twoich wybranych jednostek oraz sila przeciwnika + mozna by bylo odpalic do tej walki bonusy dowodcy czyli gracza. Mozna by tez bylo zdecydowac na ktorym miejscu ma stac jaki legion/ jednostki i to by wplywalo na sile bojowa np. Lucznicy dostaja buffa jak sa z tylu . Za zwyciestwo w walce na mapie zgarnialoby sie podbite ziemie , tym samym odblokowujac nowe miejsca i zajmujac ten teren .
+
+
+
+-Wydarzenia Paragrafowe (Wybory Moralne): Kiedy podbijasz flagę lub wysyłasz zwiad, czasem wyskakuje okienko fabularne. Przykład: "Twoi zwiadowcy złapali uciekających bandytów, którzy ukradli jedzenie". Możesz ich zabić (odzyskujesz jedzenie) lub oszczędzić i wcielić do armii (odblokowujesz unikalną jednostkę "Złodzieje", ale tracisz racje żywnościowe).
+
+-​System Najemników i Tawerna: Oprócz regularnego wojska szkolonego w Koszarach, w Tawernie za Commander Coins możesz wynająć legendarnych najemników na jedną lub kilka bitw
+
+
+
+-Gubernatorzy Regionów: Masz w swojej armii mnóstwo dowódców z perkami. Nie wszyscy muszą walczyć. Kiedy przejmiesz Kopalnię Złota, mianujesz tam jednego ze swoich ludzi gubernatorem. Jeśli ma perk "Zarządca", pasywnie zwiększa wydobycie o 30%.
+
+
+
+-Wpływ Terenu na Jednostki: Skoro mamy interaktywną mapę, podepnijmy teren pod walkę. Zgniłe Mokradła dają -20% do szybkości dla Rycerzy (grzęzną w zbrojach), a Smocze Gniazdo zadaje pasywne obrażenia od gorąca, jeśli nie masz buffa od maga. 
+

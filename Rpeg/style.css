@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=MedievalSharp&display=swap');
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    background-color: #1a1512;
+    color: #ebd6b3;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+h2, h3 {
+    font-family: 'MedievalSharp', cursive;
+    letter-spacing: 1px;
+    color: #ffd700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* GÓRNY PASEK ZASOBÓW */
+#resources-bar {
+    background-color: #1a1d29;
+    display: flex;
+    justify-content: gap;
+    gap: 20px;
+    padding: 12px 20px;
+    border-bottom: 2px solid #2d3248;
+}
+
+.resource {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #f1c40f;
+}
+
+/* KONTENER GŁÓWNY */
+#game-container {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 48px);
+}
+
+/* SIDEBAR NAWIGACJI */
+#navigation-sidebar {
+    width: 240px;
+    background-color: #161923;
+    border-right: 2px solid #2d3248;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    gap: 10px;
+}
+
+.nav-btn {
+    background: #2e221a;
+    color: #c7b299;
+    border: 2px solid #543d2b;
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    font-weight: bold;
+    font-family: 'MedievalSharp', cursive; /* Klimat karczmy */
+    font-size: 1.1rem; /* Podbity rozmiar, bo MedievalSharp jest zbita */
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 1px #000;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background-color: #3498db;
+    border-color: #5dade2;
+}
+
+/* WIDOK GRY */
+#game-viewport {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #0f111a;
+}
+
+/* RESPONSYWNOŚĆ DLA MOBILE */
+@media (max-width: 768px) {
+    #game-container {
+        flex-direction: column;
+    }
+    #navigation-sidebar {
+        width: 100%;
+        flex-direction: row;
+        height: 60px;
+        padding: 5px;
+    }
+    .nav-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+}
