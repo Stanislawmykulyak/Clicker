@@ -1,16 +1,26 @@
 // 1. GLOBALNY OBIEKT STANU GRY (Mózg Gry)
 const gameState = {
-    currentAct: 1, // Akt I: Cień w Elenvair
+    currentAct: 1,
     resources: {
         gold: 150,
-        supplies: 60
+        supplies: 60,
+        commanderCoins: 5 // Dodana wcześniej waluta[cite: 18]
     },
     campUpgrades: {
-        infirmaryLevel: 1, // Szpital
-        smithyLevel: 1      // Kuźnia
+        infirmaryLevel: 1,
+        smithyLevel: 1
     },
-    army: [] // Pula spersonalizowanych żołnierzy[cite: 4]
+    inventory: {
+        swords: 0,
+        armors: 0,
+        hornOfCourage: 0
+    },
+    isExpeditionRunning: false, // Blokada spamu zwiadu
+    army: [],
+    goldBonusPerBattle: 0,
 };
+
+
 const soldierPools = {
     human: {
         names: ["Edric", "Garrick", "Rowena", "Aldus", "Valen", "Kaelen"],
@@ -118,21 +128,40 @@ function renderBarracks() {
     const heroesList = document.getElementById('heroes-list');
     const soldiersList = document.getElementById('soldiers-list');
 
-    // Czyszczenie starych widoków
     heroesList.innerHTML = '';
     soldiersList.innerHTML = '';
 
-    // 1. Renderowanie Bohaterów
+    // Helper do generowania HTML slotów ekwipunku
+    const createSlotsHtml = (eq) => {
+        const weapon = eq?.weapon ? '⚔️' : '🗡️';
+        const armor = eq?.armor ? '🛡️' : '🦺';
+        const trinket = eq?.trinket ? '✨' : '🔮';
+        return `
+            <div class="unit-equipment">
+                <div class="equip-slot" data-slot-type="Broń">${weapon}</div>
+                <div class="equip-slot" data-slot-type="Pancerz">${armor}</div>
+                <div class="equip-slot" data-slot-type="Artefakt">${trinket}</div>
+            </div>
+        `;
+    };
+
+    // 1. Renderowanie Bohaterów (Oficerów)
     companions.forEach(hero => {
+        // Zapewniamy obiekt ekwipunku, jeśli oficer go jeszcze nie ma
+        if (!hero.equipment) {
+            hero.equipment = { weapon: null, armor: null, trinket: null };
+        }
+
         const card = document.createElement('div');
         card.className = 'unit-card';
         card.innerHTML = `
             <div class="unit-info">
                 <h4>${hero.name}</h4>
-                <p>Race: ${hero.race} | Role: ${hero.role}</p>
-                <p><small style="color: #d4af37;">Status: ${hero.assignedTo ? `Commands: ${hero.assignedTo}` : 'Wolny strzelec'}</small></p>
+                <p>Rasa: ${hero.race} | Rola: ${hero.role}</p>
+                <p><small style="color: #d4af37;">Status: ${hero.assignedTo ? `Dowodzi: ${hero.assignedTo}` : 'Wolny strzelec'}</small></p>
+                ${createSlotsHtml(hero.equipment)}
             </div>
-            <span class="badge" style="border: 1px solid #d4af37;">Officer</span>
+            <span class="badge" style="border: 1px solid #d4af37; color: #d4af37;">Oficer</span>
         `;
         heroesList.appendChild(card);
     });
@@ -147,8 +176,8 @@ function renderBarracks() {
             card.innerHTML = `
                 <div class="unit-info">
                     <h4>${soldier.name}</h4>
-                    <p>Race: ${soldier.race} | Hp: ${soldier.stats.hp}/${soldier.stats.maxHp}</p>
-                    <p><small>Hair: ${soldier.appearance.hairStyle} | Eyes: ${soldier.appearance.eyeColor}</small></p>
+                    <p>Rasa: ${soldier.race} | HP: ${soldier.stats.hp}/${soldier.stats.maxHp} | Lvl: ${soldier.stats.level}</p>
+                    ${createSlotsHtml(soldier.equipment)}
                 </div>
                 <span class="badge">${soldier.status}</span>
             `;
@@ -199,12 +228,46 @@ function switchScreen(screenId) {
     if (screenId === 'world-map') {
         renderWorldMap();
     }
+    if (screenId === 'smithy') {
+        updateSmithyUI();
+        updateResourcesUI();
+    }
+    if (screenId === 'tavern') {
+        updateResourcesUI();
+    }
 }
 
 // 3. AKTUALIZACJA INTERFEJSU
 function updateResourcesUI() {
+    // Standardowe paski
     document.getElementById('res-gold').innerText = gameState.resources.gold;
     document.getElementById('res-supplies').innerText = gameState.resources.supplies;
+    
+    const coinsEl = document.getElementById('res-coins');
+    if (coinsEl) coinsEl.innerText = gameState.resources.commanderCoins;
+
+    // NOWE: Paski wewnątrz ekranu karczmy
+    const tavGold = document.getElementById('tavern-res-gold');
+    const tavSupp = document.getElementById('tavern-res-supplies');
+    if (tavGold) tavGold.innerText = gameState.resources.gold;
+    if (tavSupp) tavSupp.innerText = gameState.resources.supplies;
+}
+
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notification-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+
+    container.appendChild(toast);
+
+    // Automatyczne usuwanie po 3 sekundach
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
 }
 
 // 4. PROSTY ZALĄŻEK KODU DLA BITWY (CANVAS)
@@ -266,7 +329,7 @@ function triggerCampDialogue(hero) {
     const text = document.getElementById('dialogue-text');
 
     speaker.innerText = hero.name;
-    
+
     // Prosta baza tekstów zależna od roli postaci
     let dialogue = "Witaj Arkelasie. Czekam na Twoje rozkazy przy ognisku.";
     if (hero.role === "Battle-Mage") dialogue = "Uniwersytet Elen-Varski dobrze nas przygotował, Arkelasie. Czuję jednak, że czarna magia Zardasa skaziła te ziemie.";
@@ -289,10 +352,10 @@ function renderWorldMap() {
     mapLocations.forEach(loc => {
         const isCurrent = travelState.currentLocation === loc.id;
         const isUnlocked = loc.req === null || travelState.unlockedLocations.includes(loc.req);
-        
+
         const card = document.createElement('div');
         card.className = `map-node ${isCurrent ? 'active-node' : ''} ${!isUnlocked ? 'locked-node' : ''}`;
-        
+
         // Dynamiczny status na dole karty
         let statusHtml = '';
         if (isCurrent) statusHtml = `<span class="loc-status status-current">📍 Twój Obóz Tu Stoi</span>`;
@@ -323,7 +386,7 @@ function moveCamp(locationId) {
 
     // 1. Przygotowanie ekranu podróży
     document.getElementById('travel-title').innerText = `🧭 Podróż do: ${targetLoc.name}`;
-    
+
     // Losowanie klimatycznego opisu drogi
     const randomQuote = travelQuotes[Math.floor(Math.random() * travelQuotes.length)];
     document.getElementById('travel-flavor').innerText = randomQuote;
@@ -336,13 +399,13 @@ function moveCamp(locationId) {
     if (fill) {
         fill.style.animation = 'none';
         fill.offsetHeight; // Wyzwolenie przebudowy widoku
-        fill.style.animation = null; 
+        fill.style.animation = null;
     }
 
     // 3. Blokada czasowa (2.5 sekundy) imitująca wędrówkę
     setTimeout(() => {
         travelState.currentLocation = locationId;
-        
+
         // Logika progresu i odkrywania mgły wojny
         if (locationId === 'forest' && !travelState.unlockedLocations.includes('caves')) {
             travelState.unlockedLocations.push('caves');
@@ -350,8 +413,97 @@ function moveCamp(locationId) {
         if (locationId === 'caves' && !travelState.unlockedLocations.includes('castle')) {
             travelState.unlockedLocations.push('castle');
         }
-
+        
         // Po zakończeniu podróży wracamy na mapę, która zrenderuje się z nową pozycją
         switchScreen('world-map');
     }, 2500);
+}
+
+
+function calculateMineIncome() {
+    let income = 0;
+    
+    // System automatycznie sprawdzi odblokowane lokacje
+    if (travelState.unlockedLocations.includes('caves')) income += 300;
+    // Tutaj w przyszłości łatwo dopiszesz kolejne lokacje:
+    // if (travelState.unlockedLocations.includes('gold_mine')) income += 500;
+    
+    return income;
+}
+
+function updateSmithyUI() {
+    document.getElementById('inv-swords').innerText = gameState.inventory.swords;
+    document.getElementById('inv-armors').innerText = gameState.inventory.armors;
+    document.getElementById('inv-horn').innerText = gameState.inventory.hornOfCourage;
+}
+
+// Funkcja wytwarzania przedmiotów w Kuźni
+function craftItem(itemKey, goldCost, coinCost) {
+    if (gameState.resources.gold < goldCost || gameState.resources.commanderCoins < coinCost) {
+        alert("Bratku, Brammer krzyczy, że nie masz wystarczająco surowców!");
+        return;
+    }
+
+    // Pobranie opłat
+    gameState.resources.gold -= goldCost;
+    gameState.resources.commanderCoins -= coinCost;
+
+    // Dodanie do ekwipunku obozowego
+    if (itemKey === 'swords') gameState.inventory.swords++;
+    if (itemKey === 'armors') gameState.inventory.armors++;
+    if (itemKey === 'horn') gameState.inventory.hornOfCourage++;
+
+    // Re-render widoków
+    updateResourcesUI();
+    updateSmithyUI();
+    console.log(`⚒️ Brammer wykuł przedmiot: ${itemKey}!`);
+}
+
+// SYSTEM ZAROBKOWY: Aktywna Ekspedycja Obozowa
+function startCampExpedition() {
+    if (gameState.isExpeditionRunning) return;
+
+    if (gameState.resources.supplies < 15) {
+        alert("Mordo, Twoje wojsko przymiera głodem! Brak 15 jednostek Zaopatrzenia na drogę[cite: 18].");
+        return;
+    }
+
+    // Konsumpcja kosztów startowych
+    gameState.resources.supplies -= 15;
+    gameState.isExpeditionRunning = true;
+    updateResourcesUI();
+
+    // Aktywacja paska ładowania w UI
+    document.getElementById('btn-expedition').disabled = true;
+    const progressContainer = document.getElementById('expedition-progress-container');
+    const progressFill = document.getElementById('expedition-progress-fill');
+
+    progressContainer.classList.remove('hidden');
+    progressFill.style.width = '0%';
+
+    // Płynna animacja ładowania paska przez JS (3 sekundy ekspedycji)
+    let width = 0;
+    const interval = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(interval);
+        } else {
+            width += 5;
+            progressFill.style.width = width + '%';
+        }
+    }, 150);
+
+    // Finał ekspedycji po 3 sekundach - Zysk!
+    setTimeout(() => {
+        // Losowy zysk złota od 80 do 120 sztuk
+        const earnedGold = Math.floor(Math.random() * 41) + 80;
+        gameState.resources.gold += earnedGold;
+
+        // Resetowanie flag i interfejsu
+        gameState.isExpeditionRunning = false;
+        document.getElementById('btn-expedition').disabled = false;
+        progressContainer.classList.add('hidden');
+
+        updateResourcesUI();
+        alert(`💰 Patrol wrócił! Zabezpieczono łupy ze Starego Lasu: +${earnedGold} Złota[cite: 18].`);
+    }, 3000);
 }

@@ -315,3 +315,165 @@ button:disabled {
 @keyframes travelLoading {
     to { width: 100%; }
 }
+
+.unit-equipment {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+/* Pojedynczy slot na przedmiot */
+.equip-slot {
+    width: 32px;
+    height: 32px;
+    background: #1a1410;
+    border: 1px dashed #554337;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.equip-slot:hover {
+    border-color: #d4af37;
+    background: #251d18;
+}
+
+/* Mini etykieta po najechaniu (tooltip) */
+.equip-slot::after {
+    content: attr(data-slot-type);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.equip-slot:hover::after {
+    opacity: 1;
+}
+.contracts-board {
+    background: #181310;
+    border: 1px solid #3a2f28;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 4px;
+}
+.contracts-board h3 { margin: 0 0 5px 0; color: #d4af37; font-size: 1.1rem; }
+.contracts-board p { margin: 0 0 10px 0; font-size: 0.85rem; color: #b0a095; }
+
+/* Układ Kuźni */
+.smithy-container {
+    flex-grow: 1;
+    margin: 20px 0;
+    overflow-y: auto;
+}
+.smithy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+.craft-card {
+    background: #251d18;
+    border: 2px solid #4a3b32;
+    padding: 15px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.craft-card h4 { margin: 0 0 5px 0; color: #fff; }
+.craft-card p { margin: 0 0 10px 0; font-size: 0.85rem; color: #b0a095; flex-grow: 1; }
+.craft-card small { display: block; margin-bottom: 10px; color: #e0e0e0; font-size: 0.8rem; }
+.craft-card button { width: 100%; font-size: 0.9rem; padding: 8px; }
+
+.tavern-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-grow: 1;
+    margin: 20px 0;
+    overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+    .tavern-container { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
+/* Plotki */
+.tavern-rumors, .tavern-board {
+    background: #1c1512;
+    border: 1px solid #3d2f26;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.tavern-rumors h3, .tavern-board h3 { margin: 0 0 12px 0; color: #d4af37; font-size: 1.1rem; }
+.rumor-bubble {
+    background: #281f1a;
+    border-left: 3px solid #d4af37;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    color: #b0a095;
+}
+
+/* Wiersze zleceń */
+.contract-row {
+    background: #251d18;
+    border: 1px solid #4a3a30;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+.contract-info h5 { margin: 0 0 3px 0; color: #fff; }
+.contract-info small { color: #a5948a; }
+.contract-row button { padding: 6px 12px; font-size: 0.85rem; }
+
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    background: rgba(27, 20, 16, 0.95);
+    border-left: 4px solid #d4af37;
+    color: #fff;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    min-width: 250px;
+    animation: slideIn 0.3s ease out;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.toast.error { border-left-color: #a72828; }
+.toast.success { border-left-color: #28a745; }
+
+@keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.toast.fade-out { opacity: 0; transform: translateX(50%); }
