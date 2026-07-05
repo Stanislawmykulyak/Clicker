@@ -1,6 +1,6 @@
 Game Plan :
 
--Genre : Fantasy RPG
+-Genre : Fantasy RPG / RTS
 
 -Główny język : Angielski
 
@@ -11,4 +11,124 @@ Game Plan :
 Tam zaciąga się do wojska i szybko awansuje w hierarchi głównie przez jego taktyczny geniusz i akcje uwolnienia sojuszników z okupowanego miasta Marandor w sojuszniczym królestwie Aldorii podczas oblezenia orkow gdzie wykorzystal czesc jednostek jako dywersje i skupil wrogie jednostki na jednym punkcie a w międzyczasie zrobil wyrwe w obronach orkow i ustabilizowal linie zaopatrzenia przez co obroncy wytrwali cale oblezenie i utrzymali miasto , podczas gdy z ekipy która została wyslana do odciagniecia wrocilo wiekszosc jednostki dzięki dobremu uzbrojeniu o które zabiegal Arkelas , został on natychmiast ogłoszony Bohaterem z pod Marandor i dostal awans na pozycje Dowodcy II armii Alderskiej ( Rzeka płynąca przez stolice) oraz był jedynie jeden szczebel pod prawdziwymi legendami Valenor czyli 11 dowódcami z ostatniej Wielkiej Bitwy którzy razem z sojusznikami (Królestwo Valenor oraz Elenvair jak i królestwo Krasnoludow z pomocą Istot Lasow , Smokow i innych pomniejszych królestw) mimo przewagi liczebnej wrogów pokonali Wrogie Armie (Zdrajcy Królestwa Elfickiego, Ludzkiego i Krasnoludzkiego oraz Drakonidzi i inne pomniejsze królestwa)wpływem Zardasa i zaprowadzili pokój w 7 Królestwach . 
 
 Po otrzymaniu tytułu w sąsiednich królestwach zapanował chwilowy pokój podczas ,którego Arkelas podróżowal po różnych krainach utrzymując dobre relacje z królestwem jako dyplomata oraz zyskując nowych przyjaciół i uczestnicząc w wielu przygodach . Gdy nagle po powrocie z misji zastaje u siebie w domu niespodziewanego gościa gdyż jest nim generał Tiordall , zanim Arkelas zdazyl cokolwiek powiedzieć , przemowil Tiordall : "Arkelasie , nie mamy dużo czasu  wiec będę się streszczal ,potrzebuje ciebie zebys uczestniczyl w specjalnej misji zleconej przez sama Rade . Będziesz wraz z 6 innymi członkami wyprawy miał za zadanie udac się na zachod az do granicy z Odległymi Lądami gdzie będziesz miał za zadanie spowolnić inwazję na Aldenor . Jak pewnie wiesz Zardas niestety powrócił i tym razem nie zamierza on poprzestać na władzy dzielonej z innymi , zależy mu na władzy absolutnej nad 7 królestwami . Tak wiec przyjmujesz misje ? - Tutaj od klikniecia konczy się prolog a zaczyna wprowadzenie do gry .
+
+
+7 Głównych Królestw w Radzie :
+
+1.Arvelath – Królestwo Wysokich Elfów
+
+Stolica: Elenvair 
+Krajobraz: Magiczne, mgliste lasy, smukłe marmurowe wieże i klify. 
+Rola w Radzie: Strażnicy starożytnej wiedzy, magii gwiazd i dyplomacji. To tutaj wychował się Arkelas. 
+
+
+2.Valenor – Żelazne Królestwo Ludzi
+
+Stolica: Valengard  
+Krajobraz: Rozległe, niekończące się pola i ufortyfikowane wzgórza.
+Rola w Radzie: Militarna potęga Aldenoru. Królestwo słynące z niezrównanych strategów, ciężkiej piechoty i potężnych murów obronnych, do którego armii zaciągnął się główny bohater.
+
+3.Aldoria – Królestwo Przymierza (Ludzie i Istoty Lasu)
+
+Stolica: Marandor  
+Krajobraz: Gęste, prastare puszcze, głębokie knieje i rzeczne doliny oraz prastare zielone magiczne obszary leśne gdzie magia jest najsilniejsza na całym kontynencie.  
+Rola w Radzie: Unikalne królestwo, gdzie ludzie żyją w absolutnej symbiozie z Istotami Lasu (Centaurami, Faunami, Entami i leśnymi duchami). To tutaj Arkelas dokonał swojego słynnego manewru dywersyjnego podczas oblężenia orków, ratując to zielone serce świata.
+
+
+4.Khaz-Borath – Podziemne Imperium Krasnoludów
+
+Stolica: Thorgard (Wykuta wewnątrz najwyższego szczytu)
+Krajobraz: Górzyste zbocza, strome granice i gigantyczne, podziemne jaskinie.  
+Rola w Radzie: Główni kowale, górnicy i inżynierowie Aldenoru. Kontrolują dostawy najrzadszych kruszców i blisko współpracują z płatnerzami (takimi jak Iorwell z Elenvair). 
+
+5.Vael-Drakor – Smocze Szczyty (Istoty Mityczne)
+
+Stolica: Dracoria (Cytadela zawieszona nad chmurami)
+Krajobraz: Niedostępne, wulkaniczne i skaliste wierzchołki górskie.  
+Rola w Radzie: Królestwo reprezentowane przez starożytne, inteligentne Smoki oraz lojalnych Drakonidów Przymierza (którzy odmówili służby Zardasowi podczas Wielkiej Wojny). Są głosem rozsądku i potężną siłą powietrzną Rady
+
+6.Gargorath – Królestwo Skalnych Gigantów (Istoty Mityczne / Humanoidalne)
+
+Stolica: Orodruin (Miasto-Wąwóz)
+Krajobraz: Monumentalne, strome wąwozy i gigantyczne klify.  
+Rola w Radzie: Państwo zamieszkane przez humanoidalnych, kamiennych Gigantów oraz Goliatów. Choć nieliczni, ich przedstawiciel w Radzie ma ogromną wagę – Giganci są powiernikami ziemi i budowniczymi samej Twierdzy 7 Stron.
+
+7.Kragorath – Horda Wolnych Klanów (Istoty Humanoidalne)
+
+Stolica: Oghmar (Forteca z czarnego żelaza i kości)
+Krajobraz: Dziki, nieprzyjazny, pełen głębokich rozpadlin i suchych stepów.
+Rola w Radzie: Najbardziej kontrowersyjna frakcja w Radzie Siedmiorga. Są to dumne, honorowe klany Orków i pomniejszych humanoidów (np. Goblinów dbających o logistykę), które ponad 50 lat temu zdradziły Zardasa i pomogły Radzie wygrać Wielką Wojnę. Choć inne królestwa patrzą na nich z dystansem (stąd średnie nastroje przed nową wojną), ich lojalność jest kluczowa dla przetrwania Aldenoru.
+
+
+7 Skrzydeł Twierdzy Rady Siedmiorga :
+
+Skrzydło Arvelath lśni białym marmurem i magią.
+Skrzydło Valenor jest obite żelaznymi tarczami.  
+Skrzydło Aldoria porastają żywe, wiecznie zielone pnącza.  
+Skrzydło Khaz-Borath zdobią potężne runy 
+Skrzydło Vael-Drakor ma wielkie lądowiska dla smoków.  
+Skrzydło Gargorath jest zbudowane z nieociosanego, monumentalnego głazu 
+Skrzydło Kragorath emanuje surowym, plemiennym klimatem wojennych sztandarów.
+
+
+Skład Wyprawy :
+
+1.Imię: Arkelas Maine
+
+Rasa: Człowiek (wychowany przez Elfy)
+
+Klasa/Rola: Strateg / Dowódca / Wojownik Wielding Elven Steel
+
+Krótka biografia: Twój bohater. Łączy taktyczny geniusz ludzkiego Valengardu z perfekcją rzemiosła, której nauczył się w Elenvair. Jako dowódca II Armii Alderskiej spina całą tę zróżnicowaną drużynę w jedność.
+
+
+2.Imię: Eleniel Voidweaver
+
+Rasa: Wysoki Elf (High Elf)
+
+Klasa/Rola: Mag Bitewny (Battle-Mage) / Astrolog
+
+Powiązanie: Studiowała razem z Arkelasem na Uniwersytecie Elen-Varskim. Specjalizuje się w magii światła gwiazd oraz potężnych zaklęciach ofensywnych. Jest głosem rozsądku w drużynie, choć na rasy "nie-humanoidalne" wciąż patrzy z lekkim elfickim wywyższeniem.
+
+
+3.Imię: Kaelen Moss-Foot
+
+Rasa: Faun (Istota Lasu – humanoidalna postać z kozimi rogami i kopytami)
+
+Klasa/Rola: Zwiadowca (Pathfinder) / Łowca
+
+Powiązanie: To on pomógł Arkelasowi przeprowadzić słynny manewr dywersyjny pod Marandor, doskonale znając leśne ścieżki. Zna każdy wąwóz, gęsty las i sekretne przejście prowadzące na zachód, ku Odległym Lądom. W walce używa łuku i magii natury (ciernie, unieruchomienia).
+
+
+4.Imię: Brammer Stoneshield
+
+Rasa: Krasnolud
+
+Klasa/Rola: Runiczny Inżynier / Obrońca (Tank)
+
+Powiązanie: Dawny przyjaciel i partner handlowy elfiego Arcymistrza Płatnerskiego Iorwella. Brammer potrafi nakładać na pancerze drużyny potężne krasnoludzkie runy ochronne. W walce posługuje się gigantycznym młotem i tarczą, potrafiąc przyjąć na siebie impet uderzenia najsilniejszych potworów Zardasa.
+
+5.Imię: Vaelra the Embersoul (Żaroznaczna)
+Rasa: Drakonid
+Klasa /Rola: Ciężkozbrojna wojowniczka / Rycerz Ognia (Dragon-Knight)
+Powiązanie: Niezwykle honorowa, dumna, wychowana w surowej, smoczej dyscyplinie militarnej. Początkowo może podchodzić z dystansem do taktyki Arkelasa (smoki wolą otwartą walkę niż dywersję), ale z czasem staje się jego najbardziej lojalną "tarczą i mieczem".
+
+
+6.Imię: Korr the Earth-Bound
+
+Rasa: Goliat (Goliath – humanoidalna rasa wywodząca się od Skalnych Gigantów, potężny wzrost, skóra twarda jak kamień)
+
+Klasa/Rola: Rębacz / Kontrola Pola Walki (Juggernaut)
+
+Powiązanie: Rekrutowany bezpośrednio z głębokich wąwozów Gargorath. Posiada nadludzką siłę – potrafi ciskać głazami i uderzeniem w ziemię ogłuszać grupy mniejszych przeciwników (np. goblinów Zardasa). Jest małomówny, ale lojalny do grobowej deski.
+
+7.Imię: Skrag Short-Fuse
+
+Rasa: Goblin
+
+Klasa/Rola: Saper / Alchemik / Łotr (Rogue)
+
+Powiązanie: Najbardziej ekscentryczny członek drużyny. Podczas gdy orki z Kragorath szykują się do otwartej wojny, Skrag został wysłany przez klany, bo jako jedyny potrafi zakraść się za linie wroga. Zapewnia drużynie brudną taktykę: mikstury leczące, toksyny, ładunki wybuchowe i rozbrajanie pułapek Zardasa. Nienawidzi, gdy krasnolud Brammer nazywa go "szkodnikiem".
+
+
 
