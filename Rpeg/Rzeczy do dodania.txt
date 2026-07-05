@@ -167,6 +167,19 @@ Arkelas oraz wszyscy jego legendarni oficerowie (Eleniel, Kaelen, Brammer, Vaelr
 
 Rozbudowujemy mechanikę weteranów o system dynamicznego awansu społecznego w strukturach armii. Zwykli żołnierze nie są skazani na wieczną służbę w cieniu legendarnych herosów – ich lojalność, waleczność i przeżywalność na polu bitwy otwierają przed nimi drogę na sam szczyt hierarchii wojskowej.  Automatyczne awanse zasłużonych: Jeśli zwykły żołnierz wykaże się w walce i przetrwa odpowiednio długo kolejne starcia, system automatycznie przyznaje mu status zasłużonego weterana, trwale podnosząc jego bazowe statystyki.  Mianowanie na Oficerów i Dowódców: Po osiągnięciu odpowiedniego poziomu doświadczenia i zasług, gracz otrzymuje możliwość oficjalnego promowania takiego wojownika na Oficera lub Dowódcę. Pozwala to na stworzenie własnej, unikalnej kadry dowódczej wspierającej 6 głównych towarzyszy Arkelasa na szeroką skalę frontu.  Artefakty Dowódcze i Aury Oddziału: Wraz z objęciem wysokiej roli dowódczej, awansowany żołnierz odblokowuje ekskluzywny slot na Artefakty Taktyczne. Włożenie tam unikalnego przedmiotu (np. runicznego sztandaru lub skradzionego talizmanu Zardasa) nie tylko drastycznie wzmacnia samego dowódcę, ale generuje potężną aurę pasywną podnoszącą morale, pancerz lub siłę ataku całej przypisanej do niego jednostki w trybie RTS
 
+23. System Cyklicznych Misji Fabularnych i Event End-game: „Gorszy niż Zardas”
+Wprowadzamy dynamiczne misje lojalnościowe, które gracz otrzymuje cyklicznie w Obozie (Camp Hub) lub na Mapie Świata w miarę postępu fabuły. Każda decyzja podjęta w tych zadaniach drastycznie redefiniuje postrzeganie Arkelasa przez jego oficerów.
+
+Mechanika Misji Towarzyszy: Raz na kilka tur konkretny kompan (np. Eleniel lub Brammer) zgłasza się do Arkelasa z osobistą prośbą lub kryzysem politycznym. Zignorowanie misji, jej całkowite zawalenie lub podjęcie bezwzględnych decyzji (np. spalenie wioski orków dla celów taktycznych) natychmiastowo obniża relacje z danym towarzyszem oraz powiązaną z nim frakcją w Radzie Siedmiorga.
+
+Moralne Wybory w Dialogach: Rozmowy w dymkach dialogowych niosą realną wagę. Wybieranie opcji bezwzględnych, chciwych lub autorytarnych systematycznie buduje ukryty wskaźnik Tyranii Arkelasa.
+
+End-game’owy Event Buntu („Gorszy niż Zardas”): Jeśli gracz przez całą grę podejmował tyraniczne decyzje i doprowadził lojalność większości kompanów do poziomu krytycznego, w Akcie III przed ostatecznym starciem odpala się Wielki Pucz w Obozie.
+
+Konfrontacja i Finałowa Zdrada: W przededniu bitwy z Zardasem, pozostali przy życiu kompani odwracają się od głównego bohatera. W kluczowej, dramatycznej scenie dialogowej stają naprzeciwko Arkelasa, a przywódca rebelii mówi mu prosto w twarz: „Spójrz na to, co zrobiłeś z Aldenorem w imię jego ratowania... Stałeś się gorszym tyranem niż Zardas”.
+
+Rozgałęzienie Rozgrywki: Wydarzenie to całkowicie zmienia finał gry. Gracz traci dostęp do zbuntowanych kompanów oraz ich armii, zmuszony do stoczenia krwawej walki na dwa fronty – przeciwko rebelii dawnych przyjaciół oraz nacierającym siłom głównego maga.
+
 
 System zapisow w przeglądarce :
 
