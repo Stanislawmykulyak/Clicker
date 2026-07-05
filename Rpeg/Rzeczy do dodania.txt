@@ -1,4 +1,4 @@
-Rzeczy do dodania
+Rzeczy do dodania ( To co napisałem to tylko szablon czyli jeśli np. podalem jeden przypadek to nie znaczy ze ma być jeden przypadek tylko ze tak ma np. wygladac i nie jest to twardy wyznacznik celu , tylko proba wytłumaczenia/pokazania .)
 
 -Waluta Commander Coins
 
@@ -74,3 +74,17 @@ I wtedy beda oddzialywac na cala armie
 
 -Wpływ Terenu na Jednostki: Skoro mamy interaktywną mapę, podepnijmy teren pod walkę. Zgniłe Mokradła dają -20% do szybkości dla Rycerzy (grzęzną w zbrojach), a Smocze Gniazdo zadaje pasywne obrażenia od gorąca, jeśli nie masz buffa od maga. 
 
+-Przedbitewne Menu Taktyczne: Okno wyboru legionów pokazujące dokładną siłę armii gracza vs siłę wroga oraz sloty na odpalenie globalnych buffów dowódcy jak i wybor jednostek walczacyh w tej bitwie ich ustawienie na polu bitwy i wizualna mapa tego gdzie stoja jakie oddzialy , wybor dowodcy do tej bitwy oraz mozliwosc zwiadu jednostek wroga za pomoca szpiegow i dostanie ingormacji zwrotnej .
+-Ryzykowne Misje Zwiadowcze: Możliwość wysłania oddziałów na misje poboczne. Sukces daje CC, relacje i zniżki u frakcji. Porażka oznacza uwięzienie jednostek i generuje misję ratunkową na mapie z limitem tur.
+-System Handlu i Rzemiosła: Sklepy frakcyjne (Farmerzy, Alchemicy, Magowie) oferujące unikalne surowce z odległych krain do craftingu.
+-Potężne Relikty (Sloty Ekwipunku): Przedmioty wpływające na całe legiony (np. Amulet Niezłomności blokujący spadek morale do 0) z podziałem na 2 sloty dla Dowódców i 3 sloty globalne dla Gracza.
+
+-Wydarzenia Paragrafowe (Dylematy): Losowe okienka fabularne podczas podbojów. Wybór A (np. egzekucja dezerterów) daje surowce, ale psuje relacje z magami. Wybór B (wcielenie do armii) daje unikalną klasę "Złodziej", ale zwiększa koszty utrzymania wojska.
+
+-Dynamiczny System Reputacji: Relacje z Wieśniakami, Alchemikami i Kowalami wpływają na ceny w sklepach, ceny ulepszeń broni oraz dostęp do unikalnych technologii.
+
+-Finałowy Boss jako Konsekwencja Gry: Główny przeciwnik dynamicznie reaguje na decyzje gracza. Jeśli gracz był tyranem, boss używa jego argumentów w dialogach, a część dowódców gracza może zdezerterować przed finałową bitwą.
+
+-Żeby gracz miał realny wpływ na losy bitwy w jej trakcie, w połowie paska zdrowia starcie zostaje zamrożone i wyskakuje nagły dylemat taktyczny.  Przykład: "Wrogowie zaczynają pękać na lewej flance, ale Twoi łucznicy zostali odsłonięci. Co robisz?"  Wybór A: Rozkaż Sir Alistairowi uderzyć w wyłom. (Szansa na natychmiastowe rozbicie wroga, ale jeśli się nie uda – wysokie straty).  Wybór B: Cofnij rycerzy do osłony strzelców. (Bezpieczna opcja, walka potrwa dłużej, ale minimalizujesz straty).
+
+-Zamiast nudnych liczników tekstowych i przycisków góra/dół, projektujemy graficzną makietę pola bitwy.  Żetony z klimatem: Każda jednostka i dowódca otrzymują swój mały, pionowy "kafelek" (żeton) z ramką pasującą do stylu gry. Rycerze mają ciężką, stalową otoczkę, łucznicy drewnianą, a Sir Alistair złotą z herbem.  Interaktywne sloty drag & drop (lub kliknięcie): Na ekranie widzisz wyraźny podział na cztery duże, oteksturowane prostokąty (Twój Front, Twój Tył, Front Wroga, Tył Wroga). Kliknięcie na żeton w rezerwie wysyła go na wybraną pozycję, co natychmiast zmienia układ sił na grafice.
