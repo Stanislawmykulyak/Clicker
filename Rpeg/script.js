@@ -20,6 +20,7 @@ const gameState = {
     goldBonusPerBattle: 0,
 };
 
+let canvasLoopInterval = null;
 
 const soldierPools = {
     human: {
@@ -55,6 +56,65 @@ let travelState = {
     currentLocation: 'camp',
     unlockedLocations: ['camp', 'forest'] // Na start odblokowany Obóz i Las
 };
+let battleState = {
+    allies: [
+        // Twój Bohater jako potężna jednostka
+        {
+            id: 'hero_1',
+            name: 'Artas (Bohater)',
+            type: 'hero',
+            x: 100,
+            y: 200,
+            size: 22,
+            speed: 2.5,
+            hp: 250,
+            maxHp: 250,
+            damage: 25,
+            defense: 8,
+            attackRange: 30,
+            color: '#00ffcc',
+            target: null // Tu system AI wpisze aktualnego wroga
+        },
+        // Zwykły żołnierz nr 1
+        {
+            id: 'ally_1',
+            name: 'Wojownik',
+            type: 'soldier',
+            x: 80,
+            y: 150,
+            size: 16,
+            speed: 1.8,
+            hp: 100,
+            maxHp: 100,
+            damage: 12,
+            defense: 4,
+            attackRange: 25,
+            color: '#3366ff',
+            target: null
+        }
+    ],
+    enemies: [
+        // Przykładowy wróg na start
+        {
+            id: 'enemy_1',
+            name: 'Szkielet',
+            type: 'monster',
+            x: 600,
+            y: 180,
+            size: 16,
+            speed: 1.5,
+            hp: 80,
+            maxHp: 80,
+            damage: 10,
+            defense: 2,
+            attackRange: 25,
+            color: '#ff3333',
+            target: null
+        }
+    ],
+    isRunning: false,
+    combatLog: []
+};
 
 const mapLocations = [
     { id: 'camp', name: '⛺ Bezpieczna Polana', desc: 'Miejsce wypoczynku Twojej drużyny. Tu regenerujecie siły.', req: null },
@@ -70,6 +130,10 @@ const travelQuotes = [
     "„Trzymając dłonie na rękojeściach mieczy, bacznie obserwowaliście korony drzew...”"
 ];
 
+const HEALING_COSTS = {
+    herbs: 5,   // Potrzeba 5 wiązek rzadkich ziół
+    gold: 10
+};
 
 //System rekrutacji wojownikow 
 
@@ -108,6 +172,29 @@ function generateSoldier(race) {
     };
 }
 
+function useHornOfCourage() {
+    if (gameState.inventory.hornOfCourage <= 0) return;
+    
+    // Konsumpcja zasobu z ekwipunku obozowego
+    gameState.inventory.hornOfCourage--;
+    
+    // Bojowy szał: Zwiększamy obrażenia (ATK) wszystkich żywych sojuszników o 50%
+    battleState.allies.forEach(ally => {
+        if (ally.stats.hp > 0) {
+            ally.stats.atk *= 1.5;
+        }
+    });
+
+    // Zabezpieczenie przycisku w interfejsie bocznej kolumny
+    const hornBtn = document.getElementById('btn-ability-horn');
+    if (hornBtn) {
+        hornBtn.innerText = `📯 Róg Odwagi (${gameState.inventory.hornOfCourage})`;
+        hornBtn.disabled = true;
+    }
+    
+    showNotification("📯 Arkelas dmie w Róg Odwagi! Atak Twoich wojsk wzrósł o 50%!", "success")
+}
+
 // Funkcja rekrutacji dodająca jednostkę do armii gracza
 function recruitSoldier(race) {
     if (gameState.resources.gold >= 50) {
@@ -128,47 +215,48 @@ function renderBarracks() {
     const heroesList = document.getElementById('heroes-list');
     const soldiersList = document.getElementById('soldiers-list');
 
-    heroesList.innerHTML = '';
-    soldiersList.innerHTML = '';
+    if (heroesList) heroesList.innerHTML = '';
+    if (soldiersList) soldiersList.innerHTML = '';
 
-    // Helper do generowania HTML slotów ekwipunku
-    const createSlotsHtml = (eq) => {
-        const weapon = eq?.weapon ? '⚔️' : '🗡️';
-        const armor = eq?.armor ? '🛡️' : '🦺';
-        const trinket = eq?.trinket ? '✨' : '🔮';
+    // Helper do generowania przycisków ekwipunku i obsługi zakładania
+    const createSlotsHtml = (unitId, isHero, eq) => {
+        const weaponText = eq.weapon ? `⚔️ ${eq.weapon}` : '🗡️ Pusty Slot';
+        const armorText = eq.armor ? `🛡️ ${eq.armor}` : '🦺 Pusty Slot';
+        
         return `
-            <div class="unit-equipment">
-                <div class="equip-slot" data-slot-type="Broń">${weapon}</div>
-                <div class="equip-slot" data-slot-type="Pancerz">${armor}</div>
-                <div class="equip-slot" data-slot-type="Artefakt">${trinket}</div>
+            <div class="unit-equipment" style="display: flex; gap: 8px; margin-top: 8px;">
+                <button onclick="equipItem('${unitId}', ${isHero}, 'weapon')" class="equip-btn-action" style="font-size: 0.75rem; padding: 4px 8px;">
+                    ${weaponText}
+                </button>
+                <button onclick="equipItem('${unitId}', ${isHero}, 'armor')" class="equip-btn-action" style="font-size: 0.75rem; padding: 4px 8px;">
+                    ${armorText}
+                </button>
             </div>
         `;
     };
 
     // 1. Renderowanie Bohaterów (Oficerów)
-    companions.forEach(hero => {
-        // Zapewniamy obiekt ekwipunku, jeśli oficer go jeszcze nie ma
+    companions.forEach((hero, index) => {
         if (!hero.equipment) {
             hero.equipment = { weapon: null, armor: null, trinket: null };
         }
-
+        const heroId = `hero_${index}`;
         const card = document.createElement('div');
         card.className = 'unit-card';
         card.innerHTML = `
             <div class="unit-info">
                 <h4>${hero.name}</h4>
                 <p>Rasa: ${hero.race} | Rola: ${hero.role}</p>
-                <p><small style="color: #d4af37;">Status: ${hero.assignedTo ? `Dowodzi: ${hero.assignedTo}` : 'Wolny strzelec'}</small></p>
-                ${createSlotsHtml(hero.equipment)}
+                ${createSlotsHtml(heroId, true, hero.equipment)}
             </div>
             <span class="badge" style="border: 1px solid #d4af37; color: #d4af37;">Oficer</span>
         `;
-        heroesList.appendChild(card);
+        if (heroesList) heroesList.appendChild(card);
     });
 
     // 2. Renderowanie Zwerbowanych Żołnierzy
     if (gameState.army.length === 0) {
-        soldiersList.innerHTML = '<p style="color: #777; text-align: center; margin-top: 20px;">Brak jednostek. Zwerbuj kogoś powyżej!</p>';
+        if (soldiersList) soldiersList.innerHTML = '<p style="color: #777; text-align: center; margin-top: 20px;">Brak jednostek. Zwerbuj kogoś powyżej!</p>';
     } else {
         gameState.army.forEach(soldier => {
             const card = document.createElement('div');
@@ -177,11 +265,11 @@ function renderBarracks() {
                 <div class="unit-info">
                     <h4>${soldier.name}</h4>
                     <p>Rasa: ${soldier.race} | HP: ${soldier.stats.hp}/${soldier.stats.maxHp} | Lvl: ${soldier.stats.level}</p>
-                    ${createSlotsHtml(soldier.equipment)}
+                    ${createSlotsHtml(soldier.id, false, soldier.equipment)}
                 </div>
                 <span class="badge">${soldier.status}</span>
             `;
-            soldiersList.appendChild(card);
+            if (soldiersList) soldiersList.appendChild(card);
         });
     }
 }
@@ -200,6 +288,136 @@ function recruitSoldierTest() {
     }
 }
 
+function equipItem(unitId, isHero, slotType) {
+    let unit = null;
+
+    // Pobieramy odpowiednią jednostkę
+    if (isHero) {
+        const index = parseInt(unitId.split('_')[1]);
+        unit = companions[index];
+    } else {
+        unit = gameState.army.find(s => s.id === unitId);
+    }
+
+    if (!unit) return;
+
+    // Jeśli slot jest już zajęty – ściągamy przedmiot z powrotem do magazynu obozu
+    if (unit.equipment[slotType]) {
+        const oldItem = unit.equipment[slotType];
+        if (slotType === 'weapon') gameState.inventory.swords++;
+        if (slotType === 'armor') gameState.inventory.armors++;
+        
+        unit.equipment[slotType] = null;
+        showNotification(`Zdemontowano: ${oldItem}`, 'info');
+        renderBarracks();
+        return;
+    }
+
+    // Zakładanie przedmiotu, jeśli mamy go na stanie w Kuźni
+    if (slotType === 'weapon') {
+        if (gameState.inventory.swords > 0) {
+            gameState.inventory.swords--;
+            unit.equipment.weapon = "Miecz ze Stali Elfów";
+            if (!isHero) unit.stats.atk += 10; // Bonus do statystyk dla zwykłego żołnierza
+            showNotification("Wyposażono w broń!", "success");
+        } else {
+            alert("Brak wolnych mieczy w kuźni obozowej, mordo!");
+        }
+    } else if (slotType === 'armor') {
+        if (gameState.inventory.armors > 0) {
+            gameState.inventory.armors--;
+            unit.equipment.armor = "Żelazny Pancerz";
+            if (!isHero) {
+                unit.stats.maxHp += 50;
+                unit.stats.hp += 50;
+            }
+            showNotification("Wyposażono w pancerz!", "success");
+        } else {
+            alert("Brak wolnych pancerzy w kuźni obozowej, bratku!");
+        }
+    }
+
+    renderBarracks();
+}
+
+function findClosestTarget(unit, targetsCollection) {
+    // Jeśli cel już istnieje i wciąż żyje, nie szukaj nowego
+    if (unit.target && unit.target.hp > 0) return unit.target;
+
+    let closest = null;
+    let minDistance = Infinity;
+
+    // Filtrujemy tylko żywe cele
+    const aliveTargets = targetsCollection.filter(t => t.hp > 0);
+
+    for (let target of aliveTargets) {
+        // Liczymy dystans z Pitagorasa: d = sqrt((x2-x1)^2 + (y2-y1)^2)
+        let dx = target.x - unit.x;
+        let dy = target.y - unit.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < minDistance) {
+            minDistance = distance;
+            closest = target;
+        }
+    }
+    return closest;
+}
+
+
+function updateUnitsAI() {
+    // 1. Aktualizacja Sojuszników (w tym Bohatera, jeśli nim nie sterujemy)
+    battleState.allies.forEach(ally => {
+        if (ally.hp <= 0) return;
+
+        // Znajdź najbliższego wroga
+        ally.target = findClosestTarget(ally, battleState.enemies);
+
+        if (ally.target) {
+            let dx = ally.target.x - ally.x;
+            let dy = ally.target.y - ally.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Jeśli wróg jest poza zasięgiem ataku -> idź do niego
+            if (distance > ally.attackRange) {
+                ally.x += (dx / distance) * ally.speed;
+                ally.y += (dy / distance) * ally.speed;
+            } else {
+                // JEST W ZASIĘGU -> Zadaj obrażenia (uwzględniając obronę celu)
+                // Używamy Math.max(..., 1), żeby minimalny hit to był zawsze 1 HP
+                let actualDamage = Math.max(ally.damage - ally.target.defense, 1);
+                
+                // UWAGA: Żeby nie zabijać w ułamku sekundy, dzielimy obrażenia przez 60 klatek
+                ally.target.hp -= actualDamage / 60; 
+            }
+        }
+    });
+
+    // 2. Aktualizacja Wrogów (robią dokładnie to samo, celując w sojuszników)
+    battleState.enemies.forEach(enemy => {
+        if (enemy.hp <= 0) return;
+
+        enemy.target = findClosestTarget(enemy, battleState.allies);
+
+        if (enemy.target) {
+            let dx = enemy.target.x - enemy.x;
+            let dy = enemy.target.y - enemy.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > enemy.attackRange) {
+                enemy.x += (dx / distance) * enemy.speed;
+                enemy.y += (dy / distance) * enemy.speed;
+            } else {
+                let actualDamage = Math.max(enemy.damage - enemy.target.defense, 1);
+                enemy.target.hp -= actualDamage / 60;
+            }
+        }
+    });
+
+    // Clean-up: Usuwamy martwe jednostki z pola bitwy
+    battleState.allies = battleState.allies.filter(a => a.hp > 0);
+    battleState.enemies = battleState.enemies.filter(e => e.hp > 0);
+}
 
 // 2. SYSTEM PRZEŁĄCZANIA EKRANÓW
 function switchScreen(screenId) {
@@ -235,22 +453,31 @@ function switchScreen(screenId) {
     if (screenId === 'tavern') {
         updateResourcesUI();
     }
+    if (screenId === 'infirmary') {
+        renderInfirmary();
+    }
+}
+
+function worldMapScreenFix() {
+    switchScreen('world-map');
 }
 
 // 3. AKTUALIZACJA INTERFEJSU
 function updateResourcesUI() {
-    // Standardowe paski
-    document.getElementById('res-gold').innerText = gameState.resources.gold;
-    document.getElementById('res-supplies').innerText = gameState.resources.supplies;
-    
+    // Górny pasek obozu
+    const resGold = document.getElementById('res-gold');
+    const resSupplies = document.getElementById('res-supplies');
+    if (resGold) resGold.innerText = gameState.resources.gold;
+    if (resSupplies) resSupplies.innerText = gameState.resources.supplies;
+
+    // Ekrany Kuźni
+    const smithyGold = document.getElementById('smithy-res-gold');
+    const smithyCoins = document.getElementById('smithy-res-coins');
+    if (smithyGold) smithyGold.innerText = gameState.resources.gold;
+    if (smithyCoins) smithyCoins.innerText = gameState.resources.commanderCoins;
+
     const coinsEl = document.getElementById('res-coins');
     if (coinsEl) coinsEl.innerText = gameState.resources.commanderCoins;
-
-    // NOWE: Paski wewnątrz ekranu karczmy
-    const tavGold = document.getElementById('tavern-res-gold');
-    const tavSupp = document.getElementById('tavern-res-supplies');
-    if (tavGold) tavGold.innerText = gameState.resources.gold;
-    if (tavSupp) tavSupp.innerText = gameState.resources.supplies;
 }
 
 function showNotification(message, type = 'info') {
@@ -269,43 +496,237 @@ function showNotification(message, type = 'info') {
         setTimeout(() => toast.remove(), 500);
     }, 3000);
 }
+let selectedAlly = null;
 
-// 4. PROSTY ZALĄŻEK KODU DLA BITWY (CANVAS)
-let canvasLoopInterval = null;
+function setupBattle() {
+    const canvas = document.getElementById('battleCanvas');
+    if (!canvas) return;
+
+    selectedAlly = null; // Reset selekcji przed nową walką
+
+    // Aktywacja przycisku Rogu Odwagi w zależności od stanu magazynu
+    const hornBtn = document.getElementById('btn-ability-horn');
+    if (hornBtn) {
+        hornBtn.innerText = `📯 Róg Odwagi (${gameState.inventory.hornOfCourage})`;
+        hornBtn.disabled = gameState.inventory.hornOfCourage <= 0;
+    }
+
+    // Obsługa myszy - kliknięcia na Canvasie (Zaznaczanie i Ruch)
+    canvas.onclick = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // 1. Szukanie, czy gracz kliknął w żywą jednostkę sojuszniczą (rozmiar 30x30)
+        const clickedAlly = battleState.allies.find(ally => 
+            ally.stats.hp > 0 &&
+            mouseX >= ally.x && mouseX <= ally.x + 30 &&
+            mouseY >= ally.y && mouseY <= ally.y + 30
+        );
+
+        if (clickedAlly) {
+            selectedAlly = clickedAlly;
+            showNotification(`Wybrano: ${selectedAlly.name}`, 'info');
+        } else if (selectedAlly) {
+            // 2. Jeśli jednostka była wybrana, a kliknięto w puste pole - wydaj punktowy rozkaz marszu
+            selectedAlly.manualX = mouseX - 15; // Centrowanie punktu docelowego
+            selectedAlly.manualY = mouseY - 15;
+            selectedAlly.target = null; // Porzucenie automatycznego agro
+        }
+    };
+
+    battleState.allies = [];
+    battleState.enemies = [];
+    battleState.isRunning = true;
+
+    // 1. Kopiujemy jednostki z gameState.army na pole bitwy i nadajemy im pozycje X, Y
+    gameState.army.forEach((soldier, index) => {
+        battleState.allies.push({
+            ...soldier,
+            x: 50 + (index * 20), // Lekki rozstrzał, żeby nie stali w jednym punkcie
+            y: 150 + (index * 45),
+            speed: 1.5,
+            target: null
+        });
+    });
+
+    // Awaryjny spawnowicz Arkelasa, jeśli gracz nie kupił nikogo w koszarach
+    if (battleState.allies.length === 0) {
+        battleState.allies.push({
+            id: 'arkelas_mvp', name: 'Arkelas (Dowódca)', stats: { hp: 200, maxHp: 200, atk: 25 },
+            x: 50, y: 225, speed: 2, target: null
+        });
+    }
+
+    // 2. Generowanie przeciwników na podstawie aktualnej lokacji
+    let enemyCount = 3 + gameState.currentAct;
+    for (let i = 0; i < enemyCount; i++) {
+        battleState.enemies.push({
+            id: 'enemy_' + i,
+            name: travelState.currentLocation === 'forest' ? 'Skażony Wilk' : 'Sługa Zardasa',
+            stats: { hp: 80, maxHp: 80, atk: 8 },
+            x: canvas.width - 80 - (i * 20),
+            y: 120 + (i * 55),
+            speed: 1.2,
+            target: null
+        });
+    }
+}
+
 function startBattleCanvasLoop() {
+    setupBattle(); // Przygotuj planszę przed odpaleniem pętli
+
     const canvas = document.getElementById('battleCanvas');
     const ctx = canvas.getContext('2d');
-
-    // Prosta pętla czyszcząca i rysująca prowizorycznego Arkelasa (Niebieski kwadrat)[cite: 4]
     if (canvasLoopInterval) clearInterval(canvasLoopInterval);
 
     canvasLoopInterval = setInterval(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!battleState.isRunning) return;
 
-        // Rysowanie tła pola bitwy
-        ctx.fillStyle = "#2e382e";
+        // --- 1. AKTUALIZACJA LOGIKI (MECHANIKA STRATEGICZNA) ---
+
+        // Ruch i szukanie celów dla Aljantów
+        battleState.allies.forEach(ally => {
+            if (ally.stats.hp <= 0) return;
+
+            // NOWOŚĆ: Nadpisanie ruchu rozkazem ręcznym gracza
+            if (ally.manualX !== undefined && ally.manualY !== undefined) {
+                const distX = ally.manualX - ally.x;
+                const distY = ally.manualY - ally.y;
+                const dist = Math.sqrt(distX * distX + distY * distY);
+
+                if (dist > 4) {
+                    ally.x += (distX / dist) * ally.speed;
+                    ally.y += (distY / dist) * ally.speed;
+                    return; // Blokujemy auto-atak w trakcie celowego przemieszczania
+                } else {
+                    // Jednostka dotarła na wskazane miejsce
+                    delete ally.manualX;
+                    delete ally.manualY;
+                }
+            }
+
+            // Standardowy system wyszukiwania wrogów (gdy brak rozkazów ręcznych)
+            const aliveEnemies = battleState.enemies.filter(e => e.stats.hp > 0);
+            if (aliveEnemies.length > 0) {
+                let closest = aliveEnemies[0];
+                ally.target = closest;
+
+                if (ally.x < closest.x - 35) {
+                    ally.x += ally.speed;
+                } else if (Math.abs(ally.y - closest.y) > 5) {
+                    ally.y += ally.y < closest.y ? ally.speed : -ally.speed;
+                } else {
+                    closest.stats.hp -= ally.stats.atk * 0.05;
+                }
+            }
+        });
+
+        // Ruch i szukanie celów dla Wrogów
+        battleState.enemies.forEach(enemy => {
+            if (enemy.stats.hp <= 0) return;
+            const aliveAllies = battleState.allies.filter(a => a.stats.hp > 0);
+            if (aliveAllies.length > 0) {
+                let closest = aliveAllies[0];
+                enemy.target = closest;
+
+                if (enemy.x > closest.x + 35) {
+                    enemy.x -= enemy.speed;
+                } else if (Math.abs(enemy.y - closest.y) > 5) {
+                    enemy.y += enemy.y < closest.y ? enemy.speed : -enemy.speed;
+                } else {
+                    closest.stats.hp -= enemy.stats.atk * 0.05;
+                }
+            }
+        });
+
+        // --- 2. RYSOWANIE GRAFIKI (RENDEROWANIE CANVAS 2D) ---
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#1e231e"; // Ciemnotrawiaste tło pola bitwy
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Arkelas jako testowy kwadrat bojowy[cite: 4]
-        ctx.fillStyle = "#3b82f6";
-        ctx.fillRect(50, 200, 40, 40);
-        ctx.fillStyle = "#fff";
-        ctx.fillText("Arkelas (MVP)", 45, 190);
-    }, 1000 / 30); // 30 FPS
-}
+        // Rysuj Sojuszników (Niebieskie jednostki)
+        battleState.allies.forEach(ally => {
+            if (ally.stats.hp <= 0) return;
+            ctx.fillStyle = "#3b82f6";
+            ctx.fillRect(ally.x, ally.y, 30, 30);
 
-// 5. TEST WYJŚCIA Z BITWY DO OBOZU
-function finishBattleTest() {
+            // Pasek życia
+            ctx.fillStyle = "#red";
+            ctx.fillRect(ally.x, ally.y - 10, 30, 4);
+            ctx.fillStyle = "#22c55e";
+            ctx.fillRect(ally.x, ally.y - 10, 30 * (ally.stats.hp / ally.stats.maxHp), 4);
+        });
+
+        // Rysuj Przeciwników (Czerwone jednostki)
+        battleState.enemies.forEach(enemy => {
+            if (enemy.stats.hp <= 0) return;
+            ctx.fillStyle = "#ef4444";
+            ctx.fillRect(enemy.x, enemy.y, 30, 30);
+
+            // Pasek życia
+            ctx.fillStyle = "#red";
+            ctx.fillRect(enemy.x, enemy.y - 10, 30, 4);
+            ctx.fillStyle = "#22c55e";
+            ctx.fillRect(enemy.x, enemy.y - 10, 30 * (enemy.stats.hp / enemy.stats.maxHp), 4);
+        });
+
+        // --- 3. WARUNKI ZWYCIĘSTWA / PRZEGRANEJ ---
+        const totalAlliesAlive = battleState.allies.filter(a => a.stats.hp > 0).length;
+        const totalEnemiesAlive = battleState.enemies.filter(e => e.stats.hp > 0).length;
+
+        if (totalEnemiesAlive === 0) {
+            endBattleResolution(true);
+        } else if (totalAlliesAlive === 0) {
+            endBattleResolution(false);
+        }
+
+    }, 1000 / 30); // 30 FPS
+};
+
+
+// Przetwarzanie wyników starcia (Złoto, Ranni, Szpital)
+function endBattleResolution(isVictory) {
+    battleState.isRunning = false;
     clearInterval(canvasLoopInterval);
-    // Symulacja zużycia zasobów po starciu
-    gameState.resources.gold += 50;
-    gameState.resources.supplies -= 10;
+
+    if (isVictory) {
+        let baseGold = 100;
+        // Dodajemy mechanikę kopalni o której rozmawialiśmy!
+        if (travelState.unlockedLocations.includes('caves')) {
+            baseGold += 300;
+        }
+
+        gameState.resources.gold += baseGold;
+        alert(`🎉 Zwycięstwo! Odepchnięto sły Zardasa. Zdobyto: ${baseGold} Złota!`);
+    } else {
+        gameState.resources.supplies = Math.max(0, gameState.resources.supplies - 15);
+        alert(`💀 Porażka! Twoje wojska zostały rozbite. Stracono zaopatrzenie.`);
+    }
+
+    // Aktualizacja stanu faktycznych jednostek w armii po bitwie (System Rannych)
+    battleState.allies.forEach(battleUnit => {
+        // Pomijamy sztucznego Arkelasa
+        if (battleUnit.id === 'arkelas_mvp') return;
+
+        let realSoldier = gameState.army.find(s => s.id === battleUnit.id);
+        if (realSoldier) {
+            if (battleUnit.stats.hp <= 0) {
+                realSoldier.status = "Wounded"; // Trafia do Szpitala Polowego
+                realSoldier.stats.hp = 1;       // Zostaje mu 1 HP ratujące życie
+            } else {
+                realSoldier.stats.hp = Math.floor(battleUnit.stats.hp);
+                realSoldier.stats.xp += 25;     // Przyznanie XP za przeżycie
+            }
+        }
+    });
+    gameState.resources.herbs += Math.floor(Math.random() * 8) + 1
+
     switchScreen('camp');
 }
-
 // Inicjalizacja gry po naładowaniu skryptu
 window.onload = () => {
-    switchScreen('main-menu');
+    switchScreen('menu');
 };
 
 function renderCampCompanions() {
@@ -376,6 +797,14 @@ function renderWorldMap() {
         }
 
         container.appendChild(card);
+        const battleBtn = document.getElementById('btn-start-battle');
+        if (battleBtn) {
+            if (travelState.currentLocation !== 'camp') {
+                battleBtn.classList.remove('hidden');
+            } else {
+                battleBtn.classList.add('hidden');
+            }
+        }
     });
 }
 
@@ -413,7 +842,7 @@ function moveCamp(locationId) {
         if (locationId === 'caves' && !travelState.unlockedLocations.includes('castle')) {
             travelState.unlockedLocations.push('castle');
         }
-        
+
         // Po zakończeniu podróży wracamy na mapę, która zrenderuje się z nową pozycją
         switchScreen('world-map');
     }, 2500);
@@ -422,12 +851,12 @@ function moveCamp(locationId) {
 
 function calculateMineIncome() {
     let income = 0;
-    
+
     // System automatycznie sprawdzi odblokowane lokacje
     if (travelState.unlockedLocations.includes('caves')) income += 300;
     // Tutaj w przyszłości łatwo dopiszesz kolejne lokacje:
     // if (travelState.unlockedLocations.includes('gold_mine')) income += 500;
-    
+
     return income;
 }
 
@@ -506,4 +935,92 @@ function startCampExpedition() {
         updateResourcesUI();
         alert(`💰 Patrol wrócił! Zabezpieczono łupy ze Starego Lasu: +${earnedGold} Złota[cite: 18].`);
     }, 3000);
+}
+
+function renderInfirmary() {
+    // Bezpieczna inicjalizacja ziół w stanie gry, jeśli jeszcze nie istnieją
+    if (gameState.resources.herbs === undefined) {
+        gameState.resources.herbs = 15; // Początkowy zapas ziół dla gracza
+    }
+
+    // Aktualizacja wskaźników surowców na ekranie szpitala
+    document.getElementById('infirmary-gold').textContent = gameState.resources.gold;
+    document.getElementById('infirmary-herbs').textContent = gameState.resources.herbs;
+
+    const woundedListContainer = document.getElementById('wounded-list');
+    woundedListContainer.innerHTML = ''; 
+
+    const woundedSoldiers = gameState.army.filter(soldier => soldier.status === 'Wounded');
+    document.getElementById('wounded-count').textContent = woundedSoldiers.length;
+
+    if (woundedSoldiers.length === 0) {
+        woundedListContainer.innerHTML = `
+            <div class="empty-state-notice">
+                <p>🎉 Wszyscy żołnierze są zdrowi i gotowi do walki! Szpital świeci pustkami.</p>
+            </div>
+        `;
+        return;
+    }
+
+    woundedSoldiers.forEach(soldier => {
+        const card = document.createElement('div');
+        card.className = 'soldier-card wounded';
+        
+        // Sprawdzamy czy gracza stać na leczenie (Złoto + Zioła)
+        const canAfford = gameState.resources.gold >= HEALING_COSTS.gold && 
+                          gameState.resources.herbs >= HEALING_COSTS.herbs;
+
+        card.innerHTML = `
+            <div class="soldier-info">
+                <h4>${soldier.name} <span class="soldier-level">Lvl ${soldier.level || 1}</span></h4>
+                <p class="soldier-class">Klasa: <strong>${soldier.type}</strong></p>
+                <p class="soldier-hp text-danger">PŻ: ${soldier.stats.hp} / ${soldier.stats.maxHp} (Ranny)</p>
+                <div class="healing-cost-badge">
+                    Koszt: 💰 ${HEALING_COSTS.gold} | 🌿 ${HEALING_COSTS.herbs} Ziół
+                </div>
+            </div>
+            <button 
+                class="btn btn-heal ${canAfford ? 'btn-success' : 'btn-disabled'}" 
+                onclick="healSoldier('${soldier.id}')"
+                ${!canAfford ? 'disabled' : ''}>
+                🩹 Ulecz ziołami
+            </button>
+        `;
+        woundedListContainer.appendChild(card);
+    });
+}
+
+/**
+ * Funkcja obsługująca proces leczenia rannego wojownika
+ */
+function healSoldier(soldierId) {
+    const soldier = gameState.army.find(s => s.id === soldierId);
+    
+    if (!soldier) {
+        showNotification("Błąd: Nie znaleziono takiego żołnierza.", "error");
+        return;
+    }
+
+    // Walidacja kosztów (Złoto + Zioła)
+    if (gameState.resources.gold < HEALING_COSTS.gold || gameState.resources.herbs < HEALING_COSTS.herbs) {
+        showNotification("Brakuje Ci złota lub leczniczych ziół!", "error");
+        return;
+    }
+
+    // Pobranie opłaty ze stanu gry
+    gameState.resources.gold -= HEALING_COSTS.gold;
+    gameState.resources.herbs -= HEALING_COSTS.herbs;
+
+    // Uzdrawianie jednostki
+    soldier.status = 'Ready';
+    soldier.stats.hp = soldier.stats.maxHp; 
+
+    // Klimatyczny komunikat fabularny
+    showNotification(`Medycy przygotowali okład z ziół dla ${soldier.name}. Rany się zabliźniły!`, "success");
+
+    // Odświeżenie widoków
+    renderInfirmary();
+    if (typeof updateResourcesDisplay === 'function') {
+        updateResourcesDisplay();
+    }
 }
